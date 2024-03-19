@@ -13,7 +13,6 @@ class BodyMain(CTkFrame):
         self.pack(fill='both', expand=True)
         # --------------- DAO ---------------
         self.thesis_dao = ThesisDAO()
-        self.thesis_requirement_dao = ThesisRequirementDAO()
         self.tech_require_dao = TechnologyRequirementDAO()
         self.tech_cate_dao = TechnologyCategoryDAO()
         self.group_dao = GroupDAO()
@@ -134,9 +133,14 @@ class BodyMain(CTkFrame):
     def get_detail_info_thesis(self, thesis: Thesis) -> str:
         try:
             detail_info = ''
-            detail_info += f"{thesis.technology_category}"
-            for tech_require in thesis.thesis_requirements:
-                detail_info += f"\n- {tech_require.technology_requirement.name}"
+            criterias = thesis.criteria_list
+            cnt = 0
+            for criteria in criterias:
+                detail_info += criteria.name + ', '
+                cnt += 1
+                if cnt == 5:
+                    detail_info += '\n'
+                    cnt = 0
             return detail_info
         except Exception as e:
             print('Error: ' + str(e))
@@ -169,10 +173,15 @@ class BodyMain(CTkFrame):
     def init_ui_show_detail_thesis(self):
         if hasattr(self, 'intro_detail_left_frame'):
             self.intro_detail_left_frame.destroy()
-
+        # --------------- Detail Left ---------------
+        '''
+            Base on:
+                - Frame: self.scroll_frame_detail_left
+                - Data: self.selected_thesis
+        '''
         self.intro_detail_left_frame = CTkFrame(self.scroll_frame_detail_left, fg_color='#232323', bg_color='#232323', )
         self.intro_detail_left_frame.pack(fill='x', pady=5, padx=5, side='top')
-
+    
         self.avatar_frame = CTkFrame(self.intro_detail_left_frame)
         self.avatar_frame.pack(fill='x', pady=5, padx=5, side='left')
 

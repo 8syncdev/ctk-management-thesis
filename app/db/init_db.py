@@ -20,13 +20,14 @@ class Account(Base):
     __tablename__ = 'account'
 
     id = Column(Integer, primary_key=True)
-    account_id = Column(String, unique=True)
     name = Column(String)
     email = Column(String, unique=True)
     role = Column(String, default='student')  # Added field to differentiate between teacher and student
     password = Column(String)
     path_img = Column(String, nullable=True)
-    groups = relationship('Group', back_populates='account')
+    # Define the one-to-many relationship between Account and Group
+    group = relationship('Group', back_populates='account')
+    # Define the one-to-many relationship between Account and Thesis
     thesis = relationship('Thesis', back_populates='account')
 
 # Define the Task model
@@ -38,9 +39,8 @@ class Task(Base):
     group_id = Column(Integer, ForeignKey('group.id'))
     progress = Column(Float, default=0)
     deadline = Column(DateTime, default=datetime.datetime.now()) 
-
+    # Define the many-to-one relationship between Task and Group
     group = relationship('Group', back_populates='tasks')
-    thesis = relationship('Thesis', back_populates='task')
 
 # Define the Group model
 class Group(Base):
@@ -48,32 +48,63 @@ class Group(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    account_id = Column(Integer, ForeignKey('account.id'))
+    # Define the one-to-many relationship between Group and Account
+    account_id = Column(Integer, ForeignKey('account.id'), unique=True)
 
-    account = relationship('Account', back_populates='groups')
+    account = relationship('Account', back_populates='group')
     tasks = relationship('Task', back_populates='group')
     thesis = relationship('Thesis', back_populates='group')
+
+# Define association table for the many-to-many relationship between Thesis and Criterion
+thesis_criterion_association = Table(
+    'thesis_criterion_association',
+    Base.metadata,
+    Column('thesis_id', Integer, ForeignKey('thesis.id')),
+    Column('criterion_id', Integer, ForeignKey('criterion.id'))
+)
+
+# Define the Criterion model
+class Criterion(Base):
+    __tablename__ = 'criterion'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String, nullable=True)
+
+    thesis_list = relationship('Thesis', secondary=thesis_criterion_association, back_populates='criteria_list')
+
+# Define association table for the many-to-many relationship between Thesis and TechnologyRequirement
+tech_requriment_thesis_association = Table(
+    'tech_requriment_thesis_association',
+    Base.metadata,
+    Column('thesis_id', Integer, ForeignKey('thesis.id')),
+    Column('technology_requirement_id', Integer, ForeignKey('technology_requirement.id'))
+)
 
 # Define the Thesis model
 class Thesis(Base):
     __tablename__ = 'thesis'
 
     id = Column(Integer, primary_key=True)
-    account_id = Column(Integer, ForeignKey('account.id'))
-    task_id = Column(Integer, ForeignKey('task.id'))
-    group_id = Column(Integer, ForeignKey('group.id'))
-    technology_categories_id = Column(Integer, ForeignKey('technology_category.id'))
+    # Define the one-to-many relationship between Thesis and Account
+    account_id = Column(Integer, ForeignKey('account.id'), unique=True)
+    # Define the one-to-many relationship between Thesis and Group
+    group_id = Column(Integer, ForeignKey('group.id'), unique=True)
     name = Column(String)
-    technology_category = Column(String)
-    criteria = Column(String) # Combined from the criteria of the technology requirements in the thesis_requirements
     score = Column(Float, default=0)
     deadline = Column(DateTime, default=datetime.datetime.now())
 
-    task = relationship('Task', back_populates='thesis')
-    technology_categories = relationship('TechnologyCategory', secondary=thesis_technology_category_association, back_populates='thesis')
+    technology_category_list = relationship('TechnologyCategory', secondary=thesis_technology_category_association, back_populates='thesis_list')
+
     account = relationship('Account', back_populates='thesis')
+
     group = relationship('Group', back_populates='thesis')
-    thesis_requirements = relationship('ThesisRequirement', back_populates='thesis', foreign_keys='ThesisRequirement.thesis_id')
+
+    criteria_list = relationship('Criterion', secondary=thesis_criterion_association, back_populates='thesis_list')
+
+    technology_requirement_list = relationship('TechnologyRequirement', secondary=tech_requriment_thesis_association, back_populates='thesis_list')
+
+
 
 # Define the TechnologyCategory model
 class TechnologyCategory(Base):
@@ -81,7 +112,7 @@ class TechnologyCategory(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    thesis = relationship('Thesis', secondary=thesis_technology_category_association, back_populates='technology_categories')
+    thesis_list = relationship('Thesis', secondary=thesis_technology_category_association, back_populates='technology_category_list')
 
 # Define the TechnologyRequirement model
 class TechnologyRequirement(Base):
@@ -91,18 +122,11 @@ class TechnologyRequirement(Base):
     name = Column(String, unique=True)
     description = Column(String)
 
-    thesis_requirements = relationship('ThesisRequirement', back_populates='technology_requirement')
+    thesis_list = relationship('Thesis', secondary=tech_requriment_thesis_association, back_populates='technology_requirement_list')
 
-# Define the ThesisRequirement model
-class ThesisRequirement(Base):
-    __tablename__ = 'thesis_requirement'
 
-    id = Column(Integer, primary_key=True)
-    thesis_id = Column(Integer, ForeignKey('thesis.id'))
-    technology_requirement_id = Column(Integer, ForeignKey('technology_requirement.id'))
 
-    thesis = relationship('Thesis', back_populates='thesis_requirements')
-    technology_requirement = relationship('TechnologyRequirement', back_populates='thesis_requirements')
+
 
 # Create the engine and connect to the SQLite database
 engine = create_engine('sqlite:///' + str(BASE_DIR / 'thesis_management.sqlite3'))
