@@ -133,14 +133,13 @@ class BodyMain(CTkFrame):
     def get_detail_info_thesis(self, thesis: Thesis) -> str:
         try:
             detail_info = ''
-            criterias = thesis.criteria_list
+            tech_requires = thesis.technology_requirement_list
             cnt = 0
-            for criteria in criterias:
-                detail_info += criteria.name + ', '
-                cnt += 1
-                if cnt == 5:
-                    detail_info += '\n'
-                    cnt = 0
+            for tech_require in tech_requires:
+                if tech_require.description.__len__() > 30:
+                    detail_info += tech_require.description[:30]+'...\n'
+                else:
+                    detail_info += tech_require.description
             return detail_info
         except Exception as e:
             print('Error: ' + str(e))
@@ -179,17 +178,34 @@ class BodyMain(CTkFrame):
                 - Frame: self.scroll_frame_detail_left
                 - Data: self.selected_thesis
         '''
+        # Intro Detail Left Frame
         self.intro_detail_left_frame = CTkFrame(self.scroll_frame_detail_left, fg_color='#232323', bg_color='#232323', )
         self.intro_detail_left_frame.pack(fill='x', pady=5, padx=5, side='top')
     
+        # Avatar Frame:
         self.avatar_frame = CTkFrame(self.intro_detail_left_frame)
-        self.avatar_frame.pack(fill='x', pady=5, padx=5, side='left')
+        self.avatar_frame.pack(fill='y', pady=5, padx=5, side='left')
+        
+        self.ctn_avatar_frame = CTkFrame(self.avatar_frame)
+        self.ctn_avatar_frame.pack(padx=5, pady=5)
 
-        self.label_avatar = CTkLabel(self.avatar_frame, text='', image=AssetUtil.get_icon('user'),)
-        self.label_avatar.pack(padx=5, pady=5, fill='both')
+        self.label_avatar = CTkLabel(self.ctn_avatar_frame, text='', image=AssetUtil.get_icon('user'),)
+        self.label_avatar.pack(padx=5, pady=5, fill='x')
 
+        self.label_name_lecturer = CTkLabel(self.ctn_avatar_frame, text=self.selected_thesis.account.name)
+        self.label_name_lecturer.pack(padx=5, pady=5, fill='x')
+        # ------------------------------------------------------
+
+        # Intro Detail Left Frame:
         self.inner_intro_detail_left_frame = CTkFrame(self.intro_detail_left_frame, fg_color='#232323', bg_color='#232323')
-        self.inner_intro_detail_left_frame.pack(fill='x', pady=5, padx=5)
+        self.inner_intro_detail_left_frame.pack(fill='both', pady=5, padx=5)
+
+        self.ctn_critias_requirement_frame = CTkFrame(self.inner_intro_detail_left_frame)
+        self.ctn_critias_requirement_frame.pack(fill='both')
+
+        for criterion in self.selected_thesis.criteria_list:
+            ...
+
 
     def selected_tech_cate(self, category):
         print(category)
