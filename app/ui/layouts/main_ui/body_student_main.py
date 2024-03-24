@@ -203,8 +203,14 @@ class BodyMain(CTkFrame):
         self.ctn_critias_requirement_frame = CTkFrame(self.inner_intro_detail_left_frame)
         self.ctn_critias_requirement_frame.pack(fill='both')
 
+        self.label_critias_requirement = CTkLabel(self.ctn_critias_requirement_frame, text='Criteria Requirement')
+        self.label_critias_requirement.pack(fill='x', pady=5)
+        self.criterion_frame = CTkScrollableFrame(self.ctn_critias_requirement_frame, height=50)
+        self.criterion_frame.pack(fill='x', pady=5)
         for criterion in self.selected_thesis.criteria_list:
-            ...
+            self.label_criterion_line = CTkLabel(self.criterion_frame, text=criterion.description)
+            self.label_criterion_line.pack(fill='x', pady=5)
+        # ------------------------------------------------------
 
 
     def selected_tech_cate(self, category):
