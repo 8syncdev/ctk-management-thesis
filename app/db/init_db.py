@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, Table
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, Table, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 import datetime
@@ -14,6 +14,13 @@ thesis_technology_category_association = Table(
     Column('thesis_id', Integer, ForeignKey('thesis.id')),
     Column('technology_category_id', Integer, ForeignKey('technology_category.id'))
 )
+# Define association table for the many-to-many relationship between Account and Group
+account_group_association = Table(
+    'account_group_association',
+    Base.metadata,
+    Column('account_id', Integer, ForeignKey('account.id')),
+    Column('group_id', Integer, ForeignKey('group.id'))
+)
 
 # Define the Account model
 class Account(Base):
@@ -21,14 +28,23 @@ class Account(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    email = Column(String, unique=True)
+    email = Column(String)
     role = Column(String, default='student')  # Added field to differentiate between teacher and student
     password = Column(String)
     path_img = Column(String, nullable=True)
     # Define the one-to-many relationship between Account and Group
-    group = relationship('Group', back_populates='account')
+    group_list = relationship('Group', secondary=account_group_association, back_populates='account_list')
     # Define the one-to-many relationship between Account and Thesis
     thesis = relationship('Thesis', back_populates='account')
+
+# Define association table for the many-to-many relationship between Thesis and Group
+group_thesis_association = Table(
+    'group_thesis_association',
+    Base.metadata,
+    Column('thesis_id', Integer, ForeignKey('thesis.id')),
+    Column('group_id', Integer, ForeignKey('group.id'))
+)
+
 
 # Define the Task model
 class Task(Base):
@@ -51,9 +67,9 @@ class Group(Base):
     # Define the one-to-many relationship between Group and Account
     account_id = Column(Integer, ForeignKey('account.id'), unique=True)
 
-    account = relationship('Account', back_populates='group')
+    account_list = relationship('Account', secondary=account_group_association, back_populates='group_list')
     tasks = relationship('Task', back_populates='group')
-    thesis = relationship('Thesis', back_populates='group')
+    thesis_list = relationship('Thesis', secondary=group_thesis_association, back_populates='group_list')
 
 # Define association table for the many-to-many relationship between Thesis and Criterion
 thesis_criterion_association = Table(
@@ -68,7 +84,7 @@ class Criterion(Base):
     __tablename__ = 'criterion'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String)
     description = Column(String, nullable=True)
 
     thesis_list = relationship('Thesis', secondary=thesis_criterion_association, back_populates='criteria_list')
@@ -81,13 +97,14 @@ tech_requriment_thesis_association = Table(
     Column('technology_requirement_id', Integer, ForeignKey('technology_requirement.id'))
 )
 
+
 # Define the Thesis model
 class Thesis(Base):
     __tablename__ = 'thesis'
 
     id = Column(Integer, primary_key=True)
-    # Define the one-to-many relationship between Thesis and Account
-    account_id = Column(Integer, ForeignKey('account.id'), unique=True)
+    # Define the many-to-many relationship between Thesis and Account
+    account_id = Column(Integer, ForeignKey('account.id'))
     # Define the one-to-many relationship between Thesis and Group
     group_id = Column(Integer, ForeignKey('group.id'), unique=True)
     name = Column(String)
@@ -98,7 +115,7 @@ class Thesis(Base):
 
     account = relationship('Account', back_populates='thesis')
 
-    group = relationship('Group', back_populates='thesis')
+    group_list = relationship('Group', secondary=group_thesis_association, back_populates='thesis_list')
 
     criteria_list = relationship('Criterion', secondary=thesis_criterion_association, back_populates='thesis_list')
 
@@ -119,7 +136,7 @@ class TechnologyRequirement(Base):
     __tablename__ = 'technology_requirement'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String)
     description = Column(String)
 
     thesis_list = relationship('Thesis', secondary=tech_requriment_thesis_association, back_populates='technology_requirement_list')
@@ -140,6 +157,8 @@ Session = sessionmaker(bind=engine)
 
 # Create the session
 session = Session()
+
+
 
 def connect_to_db():
     return session
