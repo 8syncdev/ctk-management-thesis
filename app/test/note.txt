@@ -1,0 +1,1 @@
+.sql -> student -> gen_db

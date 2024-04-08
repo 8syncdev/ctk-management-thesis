@@ -1,10 +1,10 @@
 from app.setting.setting import *
-from app.ui.base.base_ui import BaseUI
+from app.ui.base.base_top_ui import BaseTopUI
 from app.ui.layouts.main_ui.body_main_ui import BodyMain
 from app.db.main import AccountDAO
 
 
-class MainUI(BaseUI):
+class MainUI(BaseTopUI):
 
     def __init__(self, account, role='student', **kwargs):
         super().__init__(**kwargs)

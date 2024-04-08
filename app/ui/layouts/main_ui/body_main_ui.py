@@ -3,6 +3,8 @@ from app.custom.TableView import TableView
 from app.db.main import *
 from app.utils.main import *
 from app.asset.styles.style import *
+from app.custom.SlideControl import SlideControl
+from app.ui.layouts.main_ui.tab_group.tab_group_ui import TabGroupUI
 
 
 class BodyMain(CTkFrame):
@@ -26,12 +28,22 @@ class BodyMain(CTkFrame):
         # --------------- Menu Bar ---------------
         self.menu_bar = CTkFrame(self, width=200)
         self.menu_bar.pack(side='left', fill='y', padx=(0, 5))
-        self.button_home = CTkButton(self.menu_bar, text='', image=AssetUtil.get_icon('home'))
+
+        self.button_bar = CTkButton(self.menu_bar, text='', image=AssetUtil.get_icon('menu'), command=lambda: self.inner_menu_bar.animate())
+        self.button_bar.pack(fill='x', pady=(0, 5), padx=(0,5))
+
+        self.inner_menu_bar = SlideControl(self.menu_bar, -1, 0)
+        self.inner_menu_bar.animate()
+
+        self.button_home = CTkButton(self.inner_menu_bar, text='', image=AssetUtil.get_icon('home'), command=lambda: self.event_change_tab('Home'))
         self.button_home.pack(fill='x', pady=(0,5), padx=(0,5))
+
+        self.button_group = CTkButton(self.inner_menu_bar, text='', image=AssetUtil.get_icon('activity'), command=lambda: self.event_change_tab('Group'))
+        self.button_group.pack(fill='x', pady=(0,5), padx=(0,5))
         
         # --------------- Content ---------------
         # Tab
-        self.tab_view_content = CTkTabview(self)
+        self.tab_view_content = CTkTabview(self, command=self.event_change_tab)
         self.tab_view_content.pack(fill='both', expand=True)
         #----------------- Tab Home -----------------
         '''
@@ -129,7 +141,7 @@ class BodyMain(CTkFrame):
         # Button Register
         self.btn_reg_frame = CTkFrame(self.form_register_frame)
         self.btn_reg_frame.pack(fill='x', pady=5, padx=5)
-        self.button_register = CTkButton(self.btn_reg_frame, text='Register', image=AssetUtil.get_icon('send'), height=50, command=lambda : BodyUIUtil.on_send_btn_register_thesis(self.name_thesis_entry.get(), self.selection_tech_value, self.description_entry.get("0.0", "end"), self.menu_lecture.get()))
+        self.button_register = CTkButton(self.btn_reg_frame, text='Register', image=AssetUtil.get_icon('send'), height=50, command=lambda : AccountUtil.on_send_btn_register_thesis(self.name_thesis_entry.get(), self.selection_tech_value, self.description_entry.get("0.0", "end"), self.menu_lecture.get()))
         self.button_register.pack(fill='x', pady=5, padx=5)
 
         
@@ -142,7 +154,31 @@ class BodyMain(CTkFrame):
 
 
 
-        #----------------- Tab Account -----------------
+        '''
+                Tab Group:
+            '''
+
+        self.tab_view_content.add(f'Group')
+        self.content_group = CTkFrame(self.tab_view_content.tab(f'Group'))
+        self.content_group.pack(fill='both', expand=True)
+
+        self.tab_group_ui = TabGroupUI(self.content_group, loggin_account=self.account)
+
+        # --------------- Event ---------------
+        self.tab_view_content._command = self.event_change_tab
+
+
+    def event_change_tab(self, selected_tab = None):
+        if selected_tab != None:
+            self.tab_view_content.set(selected_tab)
+
+        if self.tab_view_content.get() == 'Home':
+            self.table_view_home.update_values(self.get_values_thesis(self.thesis_dao.get_all()))
+            print('Home')
+        elif self.tab_view_content.get() == 'Group':
+            self.tab_group_ui.init_ui()
+
+
 
     def get_values_thesis(self, thesis_list: List[Thesis]=[]):
         data = [[thesis.id, thesis.name, self.get_tech_cate_thesis(thesis),self.get_detail_info_thesis(thesis), thesis.account.name, self.get_number_of_group(thesis)] for thesis in thesis_list if thesis.account.role == 'lecturer']
@@ -285,15 +321,18 @@ class BodyMain(CTkFrame):
             self.label_group = CTkLabel(self.group_frame, text=f'Group {group.id}')
             self.label_group.pack(side='left', padx=10, pady=10)
 
-            self.label_amount_member = CTkLabel(self.group_frame, text=f'Member: {group.account_list.__len__()}/ {BodyUIUtil.max_member}')
+            self.label_amount_member = CTkLabel(self.group_frame, text=f'Member: {group.account_list.__len__()}/ {AccountUtil.max_member}')
             self.label_amount_member.pack(side='left', padx=5)
 
 
-            self.button_register_group = CTkButton(self.group_frame, text='Register', command=lambda group=group, label=self.label_amount_member, btn_cancel_state=self.button_out_group: BodyUIUtil.on_join_group(group, self.account, label, btn_cancel_state))
+            self.button_register_group = CTkButton(self.group_frame, text='Register', command=lambda group=group, label=self.label_amount_member, btn_cancel_state=self.button_out_group: AccountUtil.on_join_group(group, self.account, label, btn_cancel_state))
             self.button_register_group.pack(side='right',padx=10, pady=10)
 
-            self.button_out_group = CTkButton(self.group_frame, text='Out', command=lambda group=group, label=self.label_amount_member, btn_cancel_state=self.button_out_group: BodyUIUtil.on_out_group(group, self.account, label, btn_cancel_state))
+            self.button_out_group = CTkButton(self.group_frame, text='Out', command=lambda group=group, label=self.label_amount_member, btn_cancel_state=self.button_out_group: AccountUtil.on_out_group(group, self.account, label, btn_cancel_state))
             self.button_out_group.pack(side='right',padx=10, pady=10)
+
+
+            
 
             
         

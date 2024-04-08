@@ -22,6 +22,13 @@ account_group_association = Table(
     Column('group_id', Integer, ForeignKey('group.id'))
 )
 
+# Define association table for the many-to-many relationship between Task and Account
+task_account_association = Table(
+    'task_account_association',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('task.id')),
+    Column('account_id', Integer, ForeignKey('account.id'))
+)
 # Define the Account model
 class Account(Base):
     __tablename__ = 'account'
@@ -36,6 +43,8 @@ class Account(Base):
     group_list = relationship('Group', secondary=account_group_association, back_populates='account_list')
     # Define the one-to-many relationship between Account and Thesis
     thesis = relationship('Thesis', back_populates='account')
+    # Define the many-to-many relationship between Task and Account
+    task_list = relationship('Task', secondary=task_account_association, back_populates='account_list')
 
 # Define association table for the many-to-many relationship between Thesis and Group
 group_thesis_association = Table(
@@ -46,17 +55,19 @@ group_thesis_association = Table(
 )
 
 
+
+
+
 # Define the Task model
 class Task(Base):
     __tablename__ = 'task'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    group_id = Column(Integer, ForeignKey('group.id'))
     progress = Column(Float, default=0)
     deadline = Column(DateTime, default=datetime.datetime.now()) 
-    # Define the many-to-one relationship between Task and Group
-    group = relationship('Group', back_populates='tasks')
+    # Define the many-to-many relationship between Task and Account
+    account_list = relationship('Account', secondary=task_account_association, back_populates='task_list')
 
 # Define the Group model
 class Group(Base):
@@ -68,7 +79,6 @@ class Group(Base):
     account_id = Column(Integer, ForeignKey('account.id'), unique=True)
 
     account_list = relationship('Account', secondary=account_group_association, back_populates='group_list')
-    tasks = relationship('Task', back_populates='group')
     thesis_list = relationship('Thesis', secondary=group_thesis_association, back_populates='group_list')
 
 # Define association table for the many-to-many relationship between Thesis and Criterion
