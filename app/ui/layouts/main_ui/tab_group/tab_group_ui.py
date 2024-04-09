@@ -29,7 +29,7 @@ class TabGroupUI(CTkFrame):
         # ----------------- Variable -----------------
         self.selected_group = None
         if self.loggin_account.role == 'lecturer':
-            self.selected_group = self.loggin_account.group_list[0]
+            self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
 
         self.init_ui()
 
@@ -68,18 +68,22 @@ class TabGroupUI(CTkFrame):
         self.right_header.pack(side='right', fill='x', pady=5, padx=5)
 
         if self.loggin_account.role=='lecturer':
-            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[group.name for group in self.loggin_account.group_list], command=self.on_change_group)
+            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account)], command=self.on_change_group)
             self.menu_option_groups_of_lecturer.pack(side='right', padx=5)
 
     def on_change_group(self, e):
         try:
-            self.implement_body()
+            get_all_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)
+            for group in get_all_group:
+                if group.name == self.menu_option_groups_of_lecturer.get():
+                    self.selected_group = group
+                    self.init_ui()
         except Exception as e:
             print(f'Error: {e}')
             pass
 
     def implement_body(self):
-        if AccountUtil.get_joined_group(self.loggin_account) != None:
+        if (self.loggin_account.role=='student' and AccountUtil.get_joined_group(self.loggin_account) != None) or self.loggin_account.role=='lecturer':
             if hasattr(self, 'inner_body_section'):
                 self.inner_body_section.destroy()
             
@@ -100,7 +104,7 @@ class TabGroupUI(CTkFrame):
             self.scroll_frame_show_member.pack(fill='both', expand=True, pady=5, padx=5)
 
             #- Show member
-            get_all_memeber = AccountUtil.get_joined_group(self.loggin_account).account_list
+            get_all_memeber = AccountUtil.get_joined_group(self.loggin_account).account_list if self.loggin_account.role == 'student' else self.selected_group.account_list
 
             for member in get_all_memeber:
                 CTkLabel(self.scroll_frame_show_member, text=member.name).pack(pady=5, padx=5)
@@ -132,6 +136,19 @@ class TabGroupUI(CTkFrame):
 
             self.slide_progress_task = CTkEntry(self.frame_add_task, width=200)
             self.slide_progress_task.pack(pady=5, padx=5)
+            
+            # Add member task
+            if hasattr(self, 'member_task'):
+                    self.member_task.destroy()
+
+            if self.loggin_account.role == 'lecturer':
+                self.label_name_member_task = CTkLabel(self.frame_add_task, text='Member:', width=400)
+                self.label_name_member_task.pack(pady=5, padx=5)
+                
+                self.member_task = CTkOptionMenu(self.frame_add_task, values=[member.email for member in get_all_memeber], width=200)
+                self.member_task.pack(pady=5, padx=5)
+
+
 
             # Action Group:
 
@@ -144,8 +161,8 @@ class TabGroupUI(CTkFrame):
             self.frame_edit_task = CTkFrame(self.frame_group_action)
             self.frame_edit_task.pack(fill='both', expand=True, pady=5, padx=5)
 
-            self.entry_id_task = CTkEntry(self.frame_edit_task, width=200)
-            self.entry_id_task.pack(side='left', pady=5, padx=5)
+            self.entry_score = CTkEntry(self.frame_edit_task, width=200)
+            self.entry_score.pack(side='left', pady=5, padx=5)
 
             self.btn_edit_task = CTkButton(self.frame_edit_task, text='Edit Task', command=self.on_edit_task)
             self.btn_edit_task.pack(side='left', pady=5, padx=5, fill='x')
@@ -162,6 +179,24 @@ class TabGroupUI(CTkFrame):
 
     def on_add_task(self):
         try:
+            if self.loggin_account.role == 'lecturer':
+                member_email = self.member_task.get()
+                for member in self.selected_group.account_list:
+                    if member.email == member_email:
+                        name = self.entry_name_task.get()
+                        deadline = self.entry_deadline_task.get_value()
+                        progress = self.slide_progress_task.get()
+
+                        task = Task(name=name, progress=progress, deadline=deadline)
+                        member.task_list.append(task)
+                        self.account_dao.update(member)
+
+                        self.entry_name_task.delete(0, 'end')
+                        self.slide_progress_task.delete(0, 'end')
+                        self.implement_show_all_task()
+                        print('Add task success')
+                        return
+            # Student
             name = self.entry_name_task.get()
             deadline = self.entry_deadline_task.get_value()
             progress = self.slide_progress_task.get()
@@ -172,26 +207,31 @@ class TabGroupUI(CTkFrame):
 
             self.entry_name_task.delete(0, 'end')
             self.slide_progress_task.delete(0, 'end')
-            # self.init_ui()
+            self.implement_show_all_task()
             print('Add task success')
         except Exception as e:
             print(f'Error: {e}')
             pass
 
+    def get_all_task(self):
+        get_all_member = AccountUtil.get_joined_group(self.loggin_account).account_list if self.loggin_account.role == 'student' else self.selected_group.account_list
+        _list_task = []
+        for member in get_all_member:
+            if member.task_list != []:
+                for task in member.task_list:
+                    _list_task.append((
+                        task.id,
+                        member.name,
+                        member.email,
+                        task.name,
+                        task.progress,
+                        task.deadline
+                    ))
+        return _list_task
+
     def implement_show_all_task(self):
         try:
-            get_all_member = AccountUtil.get_joined_group(self.loggin_account).account_list
-            _list_task = []
-            for member in get_all_member:
-                if member.task_list != []:
-                    for task in member.task_list:
-                        _list_task.append((
-                            task.id,
-                            member.name,
-                            task.name,
-                            task.progress,
-                            task.deadline
-                        ))
+            _list_task = self.get_all_task()
 
             if hasattr(self, 'task_table_view'):
                 self.task_table_view.destroy()
@@ -200,28 +240,79 @@ class TabGroupUI(CTkFrame):
             self.task_table_view.pack(fill='both', expand=True)
 
             for _task in _list_task:
-                content_label= f'Task ID: {_task[0]}, Member: {_task[1]}, Task Name: {_task[2]}, Progress: {_task[3]}, Deadline: {_task[4]}'
+                content_label= f'Task ID: {_task[0]}, Name: {_task[1]}|{_task[2]}, Name: {_task[3]}, Progress: {_task[4]}, Deadline: {_task[5]}'
 
                 CTkLabel(self.task_table_view, text=content_label).pack(pady=5, padx=5)
+            
+            self.frame_evalute_task = CTkFrame(self.right_body)
+            self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
+
+            self.frame_progress_task = CTkFrame(self.frame_evalute_task)
+            self.frame_progress_task.pack(fill='both', expand=True, pady=5, padx=5)
+
+            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum([_[4] for _ in _list_task])}', width=400)
+            self.label_id_task.pack(pady=5, padx=5)
+
+            if hasattr(self, 'frame_evalute_task'):
+                self.frame_evalute_task.destroy()
+
+            if self.loggin_account.role == 'lecturer':
+                self.frame_evalute_task = CTkFrame(self.right_body)
+                self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
+
+                self.label_id_task = CTkLabel(self.frame_evalute_task, text='Task ID:', width=400)
+                self.label_id_task.pack()
+
+                self.entry_score = CTkEntry(self.frame_evalute_task, width=200)
+                self.entry_score.pack(pady=5, padx=5)
+
+                self.btn_evalute_task = CTkButton(self.frame_evalute_task, text='Evalute Task', command=self.on_evalute_task)
+                self.btn_evalute_task.pack(pady=5, padx=5)
+
+
+
 
                 
         except Exception as e:
             print(f'Error: {e}')
             return None
         
+    def on_evalute_task(self):
+        try:
+            score = int(self.entry_score.get())
+            
+
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+
     def on_edit_task(self):
         try:
-            task_id = self.entry_id_task.get()
-            for task in self.loggin_account.task_list:
-                if task.id == int(task_id):
-                    task.name = self.entry_name_task.get() if self.entry_name_task.get() != '' else task.name
-                    task.progress = self.slide_progress_task.get() if self.slide_progress_task.get() != '' else task.progress
-                    task.deadline = self.entry_deadline_task.get_value() if self.entry_deadline_task.get_value() != '' else task.deadline
+            if self.loggin_account.role == 'student':
+                task_id = self.entry_score.get()
+                for task in self.loggin_account.task_list:
+                    if task.id == int(task_id):
+                        task.name = self.entry_name_task.get() if self.entry_name_task.get() != '' else task.name
+                        task.progress = self.slide_progress_task.get() if self.slide_progress_task.get() != '' else task.progress
+                        task.deadline = self.entry_deadline_task.get_value() if self.entry_deadline_task.get_value() != '' else task.deadline
 
-                    self.account_dao.update(self.loggin_account)
-                    print('Edit task success')
-                    self.implement_show_all_task()
-                    return
+                        self.account_dao.update(self.loggin_account)
+                        print('Edit task success')
+                        self.implement_show_all_task()
+                        return
+            else:
+                task_id = self.entry_score.get()
+                for group_account in self.selected_group.account_list:
+                    for task in group_account.task_list:
+                        if task.id == int(task_id):
+                            task.name = self.entry_name_task.get() if self.entry_name_task.get() != '' else task.name
+                            task.progress = self.slide_progress_task.get() if self.slide_progress_task.get() != '' else task.progress
+                            task.deadline = self.entry_deadline_task.get_value() if self.entry_deadline_task.get_value() != '' else task.deadline
+
+                            self.account_dao.update(group_account)
+                            print('Edit task success')
+                            self.implement_show_all_task()
+                            return
         except Exception as e:
             print(f'Error: {e}')
             pass

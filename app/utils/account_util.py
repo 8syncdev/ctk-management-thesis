@@ -8,6 +8,7 @@ class AccountUtil:
     base_ui = None
     # GroupDAO
     group_dao = GroupDAO()
+    thesis_dao = ThesisDAO()
     max_member = 6
     #
 
@@ -55,6 +56,18 @@ class AccountUtil:
     def get_joined_group(account: Account):
         try:
             return account.group_list[0]
+        except Exception as e:
+            print(f'Error: {e}')
+            return None
+        
+    @staticmethod
+    def get_all_group_of_thesis(account: Account):
+        try:
+            get_all_thesis = AccountUtil.thesis_dao.get_all()
+            for thesis in get_all_thesis:
+                if account.email == thesis.account.email:
+                    return thesis.group_list
+                
         except Exception as e:
             print(f'Error: {e}')
             return None
