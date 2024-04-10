@@ -6,7 +6,7 @@ from app.db.main import AccountDAO
 
 class MainUI(BaseTopUI):
 
-    def __init__(self, account, role='student', **kwargs):
+    def __init__(self, account, **kwargs):
         super().__init__(**kwargs)
         self.title("Main")
         self.geometry("1400x900+100+100")
@@ -20,7 +20,7 @@ class MainUI(BaseTopUI):
             self.body
             self.footer
         '''
-        BodyMain(self, account=self.account, role=role)
+        BodyMain(self, account=self.account, role=self.account.role)
 
 
 

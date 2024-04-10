@@ -13,7 +13,7 @@ class BodyMain(CTkFrame):
         super().__init__(parent.body, **kwargs)
         self.parent = parent
         self.account = account
-        self.role = role
+        self.role = account.role
         self.pack(fill='both', expand=True)
         # --------------- DAO ---------------
         self.thesis_dao = ThesisDAO()
@@ -156,13 +156,14 @@ class BodyMain(CTkFrame):
 
         '''
                 Tab Group:
-            '''
+        '''
 
         self.tab_view_content.add(f'Group')
         self.content_group = CTkFrame(self.tab_view_content.tab(f'Group'))
         self.content_group.pack(fill='both', expand=True)
+        self.tab_group_ui = TabGroupUI(self.content_group, self.account)
 
-        self.tab_group_ui = TabGroupUI(self.content_group, loggin_account=self.account)
+        
 
         # --------------- Event ---------------
         self.tab_view_content._command = self.event_change_tab

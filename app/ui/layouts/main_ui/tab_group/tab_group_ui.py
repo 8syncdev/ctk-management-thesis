@@ -57,7 +57,8 @@ class TabGroupUI(CTkFrame):
 
         if self.loggin_account.role=='lecturer':
             name_group = self.selected_group.name if self.selected_group != None else "No Group"
-
+        else:
+            name_group = AccountUtil.get_joined_group(self.loggin_account).name if AccountUtil.get_joined_group(self.loggin_account) != None else "No Group"
         self.label_name_group = CTkLabel(self.left_header, 
                                          text=f'Group: {AccountUtil.get_joined_group(self.loggin_account).name if AccountUtil.get_joined_group(self.loggin_account) != None and self.loggin_account.role=="student" else name_group}', 
                                          width=300)
@@ -161,11 +162,17 @@ class TabGroupUI(CTkFrame):
             self.frame_edit_task = CTkFrame(self.frame_group_action)
             self.frame_edit_task.pack(fill='both', expand=True, pady=5, padx=5)
 
-            self.entry_score = CTkEntry(self.frame_edit_task, width=200)
-            self.entry_score.pack(side='left', pady=5, padx=5)
+            self.label_id_task = CTkLabel(self.frame_edit_task, text='Task ID:', width=50)
+            self.label_id_task.pack(side='left', pady=5, padx=5)
+
+            self.entry_id_task = CTkEntry(self.frame_edit_task, width=50)
+            self.entry_id_task.pack(side='left', pady=5, padx=5)
 
             self.btn_edit_task = CTkButton(self.frame_edit_task, text='Edit Task', command=self.on_edit_task)
             self.btn_edit_task.pack(side='left', pady=5, padx=5, fill='x')
+
+            self.btn_delete_task = CTkButton(self.frame_edit_task, text='Delete Task', command=self.on_delete_task)
+            self.btn_delete_task.pack(side='left', pady=5, padx=5, fill='x')
 
 
             #----------------- Right Body -----------------
@@ -175,6 +182,33 @@ class TabGroupUI(CTkFrame):
 
             # Show all task
             self.implement_show_all_task()
+
+    def on_delete_task(self):
+        try:
+            if self.loggin_account.role == 'student':
+                task_id = self.entry_id_task.get()
+                for task in self.loggin_account.task_list:
+                    if task.id == int(task_id):
+                        self.loggin_account.task_list.remove(task)
+                        self.account_dao.update(self.loggin_account)
+                        print('Delete task success')
+                        self.implement_show_all_task()
+                        return
+            else:
+                task_id = self.entry_id_task.get()
+                for group_account in self.selected_group.account_list:
+                    for task in group_account.task_list:
+                        if task.id == int(task_id):
+                            group_account.task_list.remove(task)
+                            self.account_dao.update(group_account)
+                            print('Delete task success')
+                            self.implement_show_all_task()
+                            return
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+
+
             
 
     def on_add_task(self):
@@ -243,6 +277,9 @@ class TabGroupUI(CTkFrame):
                 content_label= f'Task ID: {_task[0]}, Name: {_task[1]}|{_task[2]}, Name: {_task[3]}, Progress: {_task[4]}, Deadline: {_task[5]}'
 
                 CTkLabel(self.task_table_view, text=content_label).pack(pady=5, padx=5)
+
+            if hasattr(self, 'frame_evalute_task'):
+                self.frame_evalute_task.destroy()
             
             self.frame_evalute_task = CTkFrame(self.right_body)
             self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
@@ -250,24 +287,25 @@ class TabGroupUI(CTkFrame):
             self.frame_progress_task = CTkFrame(self.frame_evalute_task)
             self.frame_progress_task.pack(fill='both', expand=True, pady=5, padx=5)
 
-            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum([_[4] for _ in _list_task])}', width=400)
+            list_progress = [task[4] for task in _list_task]
+            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum(list_progress)/list_progress.__len__()}', width=400)
             self.label_id_task.pack(pady=5, padx=5)
 
-            if hasattr(self, 'frame_evalute_task'):
-                self.frame_evalute_task.destroy()
+            # if hasattr(self, 'frame_evalute_task'):
+            #     self.frame_evalute_task.destroy()
 
-            if self.loggin_account.role == 'lecturer':
-                self.frame_evalute_task = CTkFrame(self.right_body)
-                self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
+            # if self.loggin_account.role == 'lecturer':
+            #     self.frame_evalute_task = CTkFrame(self.right_body)
+            #     self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
 
-                self.label_id_task = CTkLabel(self.frame_evalute_task, text='Task ID:', width=400)
-                self.label_id_task.pack()
+            #     self.label_id_task = CTkLabel(self.frame_evalute_task, text='Task ID:', width=400)
+            #     self.label_id_task.pack()
 
-                self.entry_score = CTkEntry(self.frame_evalute_task, width=200)
-                self.entry_score.pack(pady=5, padx=5)
+            #     self.entry_id_task = CTkEntry(self.frame_evalute_task, width=200)
+            #     self.entry_id_task.pack(pady=5, padx=5)
 
-                self.btn_evalute_task = CTkButton(self.frame_evalute_task, text='Evalute Task', command=self.on_evalute_task)
-                self.btn_evalute_task.pack(pady=5, padx=5)
+            #     self.btn_evalute_task = CTkButton(self.frame_evalute_task, text='Evalute Task', command=self.on_evalute_task)
+            #     self.btn_evalute_task.pack(pady=5, padx=5)
 
 
 
@@ -279,8 +317,7 @@ class TabGroupUI(CTkFrame):
         
     def on_evalute_task(self):
         try:
-            score = int(self.entry_score.get())
-            
+            ...            
 
         except Exception as e:
             print(f'Error: {e}')
@@ -289,7 +326,7 @@ class TabGroupUI(CTkFrame):
     def on_edit_task(self):
         try:
             if self.loggin_account.role == 'student':
-                task_id = self.entry_score.get()
+                task_id = self.entry_id_task.get()
                 for task in self.loggin_account.task_list:
                     if task.id == int(task_id):
                         task.name = self.entry_name_task.get() if self.entry_name_task.get() != '' else task.name
@@ -301,7 +338,7 @@ class TabGroupUI(CTkFrame):
                         self.implement_show_all_task()
                         return
             else:
-                task_id = self.entry_score.get()
+                task_id = self.entry_id_task.get()
                 for group_account in self.selected_group.account_list:
                     for task in group_account.task_list:
                         if task.id == int(task_id):
