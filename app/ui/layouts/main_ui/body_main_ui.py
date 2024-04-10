@@ -62,7 +62,7 @@ class BodyMain(CTkFrame):
         self.search_button = CTkButton(self.search_frame, text='',image=AssetUtil.get_icon('search'))
         self.search_button.pack(side='right', padx=(5, 0))
         #----------------- Table -----------------
-        self.scroll_frame_table = CTkScrollableFrame(self.content_home, height=300)
+        self.scroll_frame_table = CTkScrollableFrame(self.content_home, height=600)
         self.scroll_frame_table.pack(fill='x')
         # Get data from database
         self.origin_data_table = self.get_values_thesis(self.thesis_dao.get_all())
@@ -76,9 +76,6 @@ class BodyMain(CTkFrame):
                                          )
         self.table_view_home.pack(fill='x')
         # self.table_view_home.update_values(self.get_values_thesis(self.thesis_dao.get_all()))
-        # See Detail Each Thesis
-        self.show_detail_frame = CTkFrame(self.content_home)
-        self.show_detail_frame.pack(fill='both', pady=5, expand=True)
 
         # Event Table
         TableUtil.base_ui = self
@@ -87,75 +84,43 @@ class BodyMain(CTkFrame):
         self.search_entry.bind('<Return>', lambda event: TableUtil.find_data(self.thesis_dao, self.search_entry.get()))
 
         #----------------- End Table -----------------
-        #----------------- Detail Left -----------------
-        self.detail_left_frame = CTkFrame(self.show_detail_frame)
-        self.detail_left_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
-        self.scroll_frame_detail_left = CTkScrollableFrame(self.detail_left_frame,)
-        self.scroll_frame_detail_left.pack(fill='both', expand=True)
-        self.label_detail = CTkLabel(self.scroll_frame_detail_left, text='Detail Thesis')
-        self.label_detail.pack(fill='x', pady=5)
-
-        
-        #----------------- Detail Right -----------------
-        self.detail_right_frame = CTkFrame(self.show_detail_frame)
-        self.detail_right_frame.pack(side='right', fill='both', expand=True, padx=5, pady=5)
-        self.scroll_frame_form = CTkScrollableFrame(self.detail_right_frame)
-        self.scroll_frame_form.pack(fill='both', expand=True)
-        #----------------- Form Register Thesis -----------------
-        self.form_register_frame = CTkFrame(self.scroll_frame_form)
-        self.form_register_frame.pack(fill='both', expand=True, padx=5, pady=5)
-        self.label_register = CTkLabel(self.form_register_frame, text='Register Thesis')
-        self.label_register.pack(fill='x', pady=5)
-        # Name Thesis
-        self.name_thesis_frame = CTkFrame(self.form_register_frame)
-        self.name_thesis_frame.pack(fill='x', pady=5, padx=5)
-        self.name_thesis_label = CTkLabel(self.name_thesis_frame, text='Name Thesis')
-        self.name_thesis_label.pack(side='left', padx=5, pady=5)
-        self.name_thesis_entry = CTkEntry(self.name_thesis_frame)
-        self.name_thesis_entry.pack(side='right', fill='x', expand=True, padx=5, pady=5)
-        # Technology Category
-        self.tech_cate_frame = CTkFrame(self.form_register_frame)
-        self.tech_cate_frame.pack(fill='x', pady=5, padx=5)
-        self.tech_cate_label = CTkLabel(self.tech_cate_frame, text='Technology Category')
-        self.tech_cate_label.pack(fill='x', padx=5, pady=5)
-        self.scroll_frame_tech_cate = CTkScrollableFrame(self.tech_cate_frame,)
-        self.scroll_frame_tech_cate.pack(fill='x', padx=5, pady=5)
-        self.tech_cate_data = [tech_cate.name for tech_cate in self.tech_cate_dao.get_all()]
-        self.all_tech_option=[]
-        self.selection_tech_value = []
-        for tech_cate in self.tech_cate_data:
-            self.tech_cate_option = CTkCheckBox(self.scroll_frame_tech_cate, text=tech_cate, command=lambda category=tech_cate: self.selected_tech_cate(category))
-            self.all_tech_option.append(self.tech_cate_option)
-            self.tech_cate_option.pack(fill='x', padx=5, pady=5)
-        # Description for Thesis
-        self.description_frame = CTkFrame(self.form_register_frame)
-        self.description_frame.pack(fill='x', pady=5, padx=5)
-        self.description_label = CTkLabel(self.description_frame, text='Description')
-        self.description_label.pack(fill='x', padx=5, pady=5)
-        self.description_entry = CTkTextbox(self.description_frame, height=200)
-        self.description_entry.pack(fill='x', expand=True, padx=5, pady=5)
-        # Select Teacher
-        list_teacher = [f'{account.id} - {account.name}' for account in self.account_dao.get_all() if account.role == 'lecturer']
-        self.menu_lecture = CTkOptionMenu(self.form_register_frame, values=list_teacher,)
-        self.menu_lecture.pack(fill='x', pady=5, padx=5)
-        # Button Register
-        self.btn_reg_frame = CTkFrame(self.form_register_frame)
-        self.btn_reg_frame.pack(fill='x', pady=5, padx=5)
-        self.button_register = CTkButton(self.btn_reg_frame, text='Register', image=AssetUtil.get_icon('send'), height=50, command=lambda : AccountUtil.on_send_btn_register_thesis(self.name_thesis_entry.get(), self.selection_tech_value, self.description_entry.get("0.0", "end"), self.menu_lecture.get()))
-        self.button_register.pack(fill='x', pady=5, padx=5)
-
         
         # --------------- Event ---------------
-        # Implement when click on table
-        # show_detail_thesis()
-        # init_ui_show_detail_thesis()
+        """
+            # Implement when click on table
+            # show_detail_thesis()
+            # init_ui_show_detail_thesis()
+        """
+
+        # --------------- Slide Show ---------------
+        # Left Slide Show
+        self.slide_show_detail = SlideControl(self, -0.5, 0, options={
+            'rely': 0.1,
+            'relheight': 0.8,
+        }, time_duration=0.01)
+        self.scroll_frame_detail_left = CTkScrollableFrame(self.slide_show_detail)
+        self.scroll_frame_detail_left.pack(fill='both', expand=True)
+        # Right Slide Show
+        self.slide_show_form = SlideControl(self, 1, 0.5, options={
+            'rely': 0.1,
+            'relheight': 0.8,
+        }, time_duration=0.01, direction='-x')
+        # self.slide_show_form.animate_forward()
+        self.scroll_frame_form = CTkFrame(self.slide_show_form)
+        self.scroll_frame_form.pack(fill='both', expand=True)
+        self.init_ui_form_register_thesis()
+
+        # --------------- Action ---------------
+        self.frame_action = CTkFrame(self.content_home)
+        self.frame_action.pack(fill='both', pady=5, expand=True)
+
+        self.button_register_thesis = CTkButton(self.frame_action, text='Register Thesis', image=AssetUtil.get_icon('plus-circle'), command=lambda: self.slide_show_form.animate())
+        self.button_register_thesis.pack(pady=5, padx=5, side='left')
+        print(self.account.role)
         #----------------- End Tab Home -----------------
-        
-
-
 
         '''
-                Tab Group:
+            Tab Group:
         '''
 
         self.tab_view_content.add(f'Group')
@@ -164,7 +129,7 @@ class BodyMain(CTkFrame):
         self.tab_group_ui = TabGroupUI(self.content_group, self.account)
 
         
-
+        
         # --------------- Event ---------------
         self.tab_view_content._command = self.event_change_tab
 
@@ -237,10 +202,73 @@ class BodyMain(CTkFrame):
         thesis_id = selected_row[0]
         # Get data from database
         self.selected_thesis = self.thesis_dao.get(int(thesis_id))
+        # create slide control
+
+        self.slide_show_detail.animate()
+        #- Show Detail Thesis
         self.init_ui_show_detail_thesis()
         self.table_view_home.deselect_row(data.get('row'))
 
+
+    def init_ui_form_register_thesis(self):
+        if hasattr(self, 'detail_right_frame'):
+            self.detail_right_frame.destroy()
+        #----------------- Detail Right -----------------
+        self.detail_right_frame = CTkFrame(self.scroll_frame_form,)
+        self.detail_right_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        self._scroll_frame_form = CTkScrollableFrame(self.detail_right_frame)
+        self._scroll_frame_form.pack(fill='both', expand=True)
+        #----------------- Form Register Thesis -----------------
+        self.form_register_frame = CTkFrame(self._scroll_frame_form)
+        self.form_register_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        # Header
+        self.header_frame_register = CTkFrame(self.form_register_frame)
+        self.header_frame_register.pack(fill='x', pady=5, padx=5)
+
+        self.label_register = CTkLabel(self.header_frame_register, text='Register Thesis')
+        self.label_register.pack(fill='x', pady=5, side='left', padx=5)
+        self.button_close_register = CTkButton(self.header_frame_register, text='', image=AssetUtil.get_icon('x-circle'), command=lambda: self.slide_show_form.animate())
+        self.button_close_register.pack(fill='x', pady=5, side='right', padx=5)
+        # Name Thesis
+        self.name_thesis_frame = CTkFrame(self.form_register_frame)
+        self.name_thesis_frame.pack(fill='x', pady=5, padx=5)
+        self.name_thesis_label = CTkLabel(self.name_thesis_frame, text='Name Thesis')
+        self.name_thesis_label.pack(side='left', padx=5, pady=5)
+        self.name_thesis_entry = CTkEntry(self.name_thesis_frame)
+        self.name_thesis_entry.pack(side='right', fill='x', expand=True, padx=5, pady=5)
+        # Technology Category
+        self.tech_cate_frame = CTkFrame(self.form_register_frame)
+        self.tech_cate_frame.pack(fill='x', pady=5, padx=5)
+        self.tech_cate_label = CTkLabel(self.tech_cate_frame, text='Technology Category')
+        self.tech_cate_label.pack(fill='x', padx=5, pady=5)
+        self.scroll_frame_tech_cate = CTkScrollableFrame(self.tech_cate_frame,)
+        self.scroll_frame_tech_cate.pack(fill='x', padx=5, pady=5)
+        self.tech_cate_data = [tech_cate.name for tech_cate in self.tech_cate_dao.get_all()]
+        self.all_tech_option=[]
+        self.selection_tech_value = []
+        for tech_cate in self.tech_cate_data:
+            self.tech_cate_option = CTkCheckBox(self.scroll_frame_tech_cate, text=tech_cate, command=lambda category=tech_cate: self.selected_tech_cate(category))
+            self.all_tech_option.append(self.tech_cate_option)
+            self.tech_cate_option.pack(fill='x', padx=5, pady=5)
+        # Description for Thesis
+        self.description_frame = CTkFrame(self.form_register_frame)
+        self.description_frame.pack(fill='x', pady=5, padx=5)
+        self.description_label = CTkLabel(self.description_frame, text='Description')
+        self.description_label.pack(fill='x', padx=5, pady=5)
+        self.description_entry = CTkTextbox(self.description_frame, height=200)
+        self.description_entry.pack(fill='x', expand=True, padx=5, pady=5)
+        # Select Teacher
+        list_teacher = [f'{account.id} - {account.name}' for account in self.account_dao.get_all() if account.role == 'lecturer']
+        self.menu_lecture = CTkOptionMenu(self.form_register_frame, values=list_teacher,)
+        self.menu_lecture.pack(fill='x', pady=5, padx=5)
+        # Button Register
+        self.btn_reg_frame = CTkFrame(self.form_register_frame)
+        self.btn_reg_frame.pack(fill='x', pady=5, padx=5)
+        self.button_register = CTkButton(self.btn_reg_frame, text='Register', image=AssetUtil.get_icon('send'), height=50, command=lambda : AccountUtil.on_send_btn_register_thesis(self.name_thesis_entry.get(), self.selection_tech_value, self.description_entry.get("0.0", "end"), self.menu_lecture.get()))
+        self.button_register.pack(fill='x', pady=5, padx=5)
+
     def init_ui_show_detail_thesis(self):
+        
         if hasattr(self, 'intro_detail_left_frame'):
             self.intro_detail_left_frame.destroy()
         # --------------- Detail Left ---------------
@@ -250,8 +278,18 @@ class BodyMain(CTkFrame):
                 - Data: self.selected_thesis
         '''
         # Intro Detail Left Frame
-        self.intro_detail_left_frame = CTkFrame(self.scroll_frame_detail_left,)
-        self.intro_detail_left_frame.pack(fill='x', pady=5, padx=5, side='top')
+        self.intro_detail_left_frame = CTkFrame(self.scroll_frame_detail_left, height=500)
+        self.intro_detail_left_frame.pack(fill='both', pady=5, padx=5, expand=True)
+
+        # Inner Header Frame
+        self.inner_header_frame_detail = CTkFrame(self.intro_detail_left_frame)
+        self.inner_header_frame_detail.pack(fill='x', pady=5, padx=5)
+
+        self.label_inner_header = CTkLabel(self.inner_header_frame_detail, text='Detail Thesis')
+        self.label_inner_header.pack(side='left', padx=5, pady=5, fill='x')
+
+        self.button_back = CTkButton(self.inner_header_frame_detail, text='', command=lambda: self.slide_show_detail.animate_backwards(), image=AssetUtil.get_icon('x-circle'))
+        self.button_back.pack(side='right', padx=5, pady=5)
 
 
         # Intro Frame CTN:
@@ -332,17 +370,8 @@ class BodyMain(CTkFrame):
             self.button_out_group = CTkButton(self.group_frame, text='Out', command=lambda group=group, label=self.label_amount_member, btn_cancel_state=self.button_out_group: AccountUtil.on_out_group(group, self.account, label, btn_cancel_state))
             self.button_out_group.pack(side='right',padx=10, pady=10)
 
-
-            
-
-            
-        
-
-        
-
-
-
-
+        # print('Show Detail Thesis')
+        self.after(1000, self.slide_show_detail.animate_forward)
 
     def selected_tech_cate(self, category):
         for option in self.all_tech_option:
