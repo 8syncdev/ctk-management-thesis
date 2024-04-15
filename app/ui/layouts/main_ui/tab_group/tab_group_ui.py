@@ -25,6 +25,7 @@ class TabGroupUI(CTkFrame):
         self.group_dao = GroupDAO()
         self.task_dao = TaskDAO()
         self.account_dao = AccountDAO()
+        self.comment_dao = CommentDAO()
         # print(AccountUtil.get_joined_group(self.loggin_account))
         # ----------------- Variable -----------------
         self.selected_group = None
@@ -178,7 +179,7 @@ class TabGroupUI(CTkFrame):
             #----------------- Right Body -----------------
 
             self.scroll_show_all_task = CTkScrollableFrame(self.right_body, height=300)
-            self.scroll_show_all_task.pack(fill='x', pady=5, padx=5)
+            self.scroll_show_all_task.pack(fill='both', pady=5, padx=5, expand=True)
 
             # Show all task
             self.implement_show_all_task()
@@ -273,23 +274,50 @@ class TabGroupUI(CTkFrame):
             self.task_table_view = CTkFrame(self.scroll_show_all_task)
             self.task_table_view.pack(fill='both', expand=True)
 
-            for _task in _list_task:
-                content_label= f'Task ID: {_task[0]}, Name: {_task[1]}|{_task[2]}, Name: {_task[3]}, Progress: {_task[4]}, Deadline: {_task[5]}'
+            self.list_widgets_task = []
 
-                CTkLabel(self.task_table_view, text=content_label).pack(pady=5, padx=5)
+
+            for _task in _list_task:
+                _item_attr = {
+                    'task_id': None,
+                    'widget': None,
+                }
+                row = CTkFrame(self.task_table_view)
+                row.pack(fill='x', pady=5, padx=5)
+
+                innerr_frame = CTkFrame(row)
+                innerr_frame.pack(fill='x', pady=5, padx=5, side='top')
+
+                content_label= f'Task ID: {_task[0]}, Name: {_task[1]}|{_task[2]}, Task: {_task[3]}\n Progress: {_task[4]}, Deadline: {_task[5]}'
+
+                CTkLabel(innerr_frame, text=content_label, anchor='w').pack(pady=5, padx=5, side='left')
+
+                right_frame = CTkFrame(innerr_frame)
+                right_frame.pack(side='right', fill='x', pady=5, padx=5)
+
+                btn_add_comment = CTkButton(right_frame, text='', command=lambda task_id=_task[0]: self.on_add_comment(task_id), image=AssetUtil.get_icon('edit'), width=40, height=40)
+                btn_add_comment.pack(pady=5, padx=5, side='right')
+
+                btn_delete_task = CTkButton(right_frame, text='', command=lambda task_id=_task[0]: self.on_delete_task(task_id), image=AssetUtil.get_icon('delete'), width=40, height=40, fg_color='red')
+                btn_delete_task.pack(pady=5, padx=5, side='right')
+
+                # Update item attribute for each row to add comment items.
+                _item_attr['task_id'] = _task[0]
+                _item_attr['widget'] = row
+                self.list_widgets_task.append(_item_attr)
 
             if hasattr(self, 'frame_evalute_task'):
                 self.frame_evalute_task.destroy()
             
             self.frame_evalute_task = CTkFrame(self.right_body)
-            self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
+            self.frame_evalute_task.pack(fill='x', side='bottom', pady=5, padx=5)
 
             self.frame_progress_task = CTkFrame(self.frame_evalute_task)
-            self.frame_progress_task.pack(fill='both', expand=True, pady=5, padx=5)
+            self.frame_progress_task.pack(fill='x', pady=5, padx=5)
 
             list_progress = [task[4] for task in _list_task]
-            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum(list_progress)/list_progress.__len__()}', width=400)
-            self.label_id_task.pack(pady=5, padx=5)
+            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum(list_progress)/list_progress.__len__()}', width=400, font=('Arial', 17, 'bold'), text_color='green')
+            self.label_id_task.pack(pady=5, padx=5, side='left')
 
             # if hasattr(self, 'frame_evalute_task'):
             #     self.frame_evalute_task.destroy()
@@ -315,6 +343,63 @@ class TabGroupUI(CTkFrame):
             print(f'Error: {e}')
             return None
         
+    def on_add_comment(self, task_id):
+        try:
+            get_all_comment_of_task = [comment for comment in self.comment_dao.get_all() if comment.task_id == task_id]
+            # if get_all_comment_of_task != []:
+            #     self.init_ui_comments_for_task(get_all_comment_of_task, task_id)
+
+            get_row = [item for item in self.list_widgets_task if item['task_id'] == task_id]
+            if get_row != []:
+                row = get_row[0]['widget']
+                # row.configure(height=500)
+                # row.update()
+
+                if not hasattr(row, 'frame_comment') or row.open==False:
+                    print('Add comment success')
+                    row.open = True
+
+                    row.frame_comment = CTkFrame(row, height=500)
+                    row.frame_comment.pack(fill='both', pady=5, padx=5, expand=True)
+
+                    row_show_comment = CTkScrollableFrame(row.frame_comment, height=400)
+                    row_show_comment.pack(fill='both', pady=5, padx=5, expand=True)
+
+                    row_add_comment = CTkFrame(row.frame_comment)
+                    row_add_comment.pack(fill='x', pady=(0,5), padx=5, side='bottom')
+
+                    row.btn_add_comment = CTkButton(row_add_comment, text='', command=lambda: self.on_add_comment_task(self.task_dao.get(task_id), self.loggin_account, row), image=AssetUtil.get_icon('upload'), width=40, height=40)
+                    row.btn_add_comment.pack(pady=5, padx=5, side='right', fill='x')
+
+                    row.entry_comment = CTkTextbox(row_add_comment, height=50, width=500)
+                    row.entry_comment.pack(pady=5, padx=5, side='right', fill='x')
+
+                    # Override scroll_frame_comment to row
+                    print(get_all_comment_of_task)
+                    if get_all_comment_of_task == []:
+                        ...
+
+                else:
+                    print('Remove comment success')
+                    row.frame_comment.destroy()
+                    row.open = False
+
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+        
+    def on_add_comment_task(self, task, account, current_row):
+        try:
+            if current_row.entry_comment.get('1.0', 'end-1c') != '':
+                comment = Comment(content=current_row.entry_comment.get('1.0', 'end-1c'), account_id=account.id)
+                self.comment_dao.create(comment)
+
+                task.comment_list.append(comment)
+                self.task_dao.update(task)
+                print('Add comment success')
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
     def on_evalute_task(self):
         try:
             ...            
