@@ -55,7 +55,13 @@ group_thesis_association = Table(
 )
 
 
-
+# Define association table for the many-to-many relationship between Task and Comment
+task_comment_association = Table(
+    'task_comment_association',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('task.id')),
+    Column('comment_id', Integer, ForeignKey('comment.id'))
+)
 
 
 # Define the Task model
@@ -68,6 +74,8 @@ class Task(Base):
     deadline = Column(DateTime, default=datetime.datetime.now()) 
     # Define the many-to-many relationship between Task and Account
     account_list = relationship('Account', secondary=task_account_association, back_populates='task_list')
+    # Define the many-to-many relationship between Task and Comment
+    comment_list = relationship('Comment', secondary=task_comment_association, back_populates='task_list')
 
 # Define the Group model
 class Group(Base):
@@ -150,6 +158,21 @@ class TechnologyRequirement(Base):
     description = Column(String)
 
     thesis_list = relationship('Thesis', secondary=tech_requriment_thesis_association, back_populates='technology_requirement_list')
+
+# Define the Comment model
+class Comment (Base):
+    __tablename__ = 'comment'
+
+    id = Column(Integer, primary_key=True)
+    content = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.now())
+    # Define the one-to-many relationship between Comment and Account
+    account_id = Column(Integer, ForeignKey('account.id'))
+
+    account = relationship('Account')
+    task_list = relationship('Task', secondary=task_comment_association, back_populates='comment_list')
+
+
 
 
 
