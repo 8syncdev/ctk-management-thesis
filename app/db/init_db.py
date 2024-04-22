@@ -69,7 +69,7 @@ class Task(Base):
     __tablename__ = 'task'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String)
     progress = Column(Float, default=0)
     deadline = Column(DateTime, default=datetime.datetime.now()) 
     # Define the many-to-many relationship between Task and Account

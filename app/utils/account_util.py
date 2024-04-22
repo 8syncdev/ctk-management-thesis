@@ -71,3 +71,15 @@ class AccountUtil:
         except Exception as e:
             print(f'Error: {e}')
             return None
+        
+    @staticmethod
+    def get_thesis_of_account(account: Account):
+        try:
+            get_all_thesis = AccountUtil.thesis_dao.get_all()
+            for thesis in get_all_thesis:
+                if account.email == thesis.account.email:
+                    return thesis
+                
+        except Exception as e:
+            print(f'Error: {e}')
+            return None

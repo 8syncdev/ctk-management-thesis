@@ -8,21 +8,19 @@ class CalenderControl(CTkFrame):
     def __init__(self, master=None, **kw):
         super().__init__(master=master, **kw)
         self.master = master
-        self.pack(fill='x')
+        self.pack()
         self.init_ui()
 
 
     def init_ui(self):
-        self.menu_option_day = CTkOptionMenu(self, values=[str(i) for i in range(1, monthrange(2021, 1)[1] + 1)])
+        self.menu_option_day = CTkOptionMenu(self, values=[str(i) for i in range(1, monthrange(2021, 1)[1] + 1)], width=10)
         self.menu_option_day.pack(side='left', padx=5)
 
-        self.menu_option_month = CTkOptionMenu(self, values=[str(i) for i in range(1, 13)], command=lambda e : self.update_day(self.get_day_of_month(self.menu_option_month.get())))
+        self.menu_option_month = CTkOptionMenu(self, values=[str(i) for i in range(1, 13)], command=lambda e : self.update_day(self.get_day_of_month(self.menu_option_month.get())), width=10)
         self.menu_option_month.pack(side='left', padx=5)
 
-        self.menu_option_year = CTkOptionMenu(self, values=[str(i) for i in range(2021, 2031)], command=lambda e : self.update_day(self.get_day_of_month(self.menu_option_month.get())))
+        self.menu_option_year = CTkOptionMenu(self, values=[str(i) for i in range(2021, 2031)], command=lambda e : self.update_day(self.get_day_of_month(self.menu_option_month.get())), width=10)
         self.menu_option_year.pack(side='left', padx=5)
-
-
 
 
     

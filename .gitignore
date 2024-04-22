@@ -1,4 +1,15 @@
+# Environment
 /venv
 venv
+*venv*
+*/venv
+
+# Assets
 /icons/font_awesome
 /icons/material_design
+
+# Python cache
+__pycache__
+*/__pycache__
+
+

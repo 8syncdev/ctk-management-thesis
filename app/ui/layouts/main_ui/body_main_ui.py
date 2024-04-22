@@ -5,6 +5,7 @@ from app.utils.main import *
 from app.asset.styles.style import *
 from app.custom.SlideControl import SlideControl
 from app.ui.layouts.main_ui.tab_group.tab_group_ui import TabGroupUI
+from app.ui.layouts.main_ui.tab_grade.tab_grade_ui import TabGradeUI
 
 
 class BodyMain(CTkFrame):
@@ -40,6 +41,9 @@ class BodyMain(CTkFrame):
 
         self.button_group = CTkButton(self.inner_menu_bar, text='', image=AssetUtil.get_icon('activity'), command=lambda: self.event_change_tab('Group'))
         self.button_group.pack(fill='x', pady=(0,5), padx=(0,5))
+
+        self.button_grade = CTkButton(self.inner_menu_bar, text='', image=AssetUtil.get_icon('award'), command=lambda: self.event_change_tab('Grade'))
+        self.button_grade.pack(fill='x', pady=(0,5), padx=(0,5))
         
         # --------------- Content ---------------
         # Tab
@@ -95,10 +99,10 @@ class BodyMain(CTkFrame):
         # --------------- Slide Show ---------------
         # Left Slide Show
         self.slide_show_detail = SlideControl(self, -0.5, 0, options={
-            'rely': 0.1,
-            'relheight': 0.8,
+            'rely': 0.05,
+            'relheight': 0.95,
         }, time_duration=0.01)
-        self.scroll_frame_detail_left = CTkScrollableFrame(self.slide_show_detail)
+        self.scroll_frame_detail_left = CTkFrame(self.slide_show_detail, border_width=5)
         self.scroll_frame_detail_left.pack(fill='both', expand=True)
         # Right Slide Show
         self.slide_show_form = SlideControl(self, 1, 0.5, options={
@@ -106,7 +110,7 @@ class BodyMain(CTkFrame):
             'relheight': 0.8,
         }, time_duration=0.01, direction='-x')
         # self.slide_show_form.animate_forward()
-        self.scroll_frame_form = CTkFrame(self.slide_show_form)
+        self.scroll_frame_form = CTkFrame(self.slide_show_form, border_width=5)
         self.scroll_frame_form.pack(fill='both', expand=True)
         self.init_ui_form_register_thesis()
 
@@ -116,7 +120,7 @@ class BodyMain(CTkFrame):
 
         self.button_register_thesis = CTkButton(self.frame_action, text='Register Thesis', image=AssetUtil.get_icon('plus-circle'), command=lambda: self.slide_show_form.animate())
         self.button_register_thesis.pack(pady=5, padx=5, side='left')
-        print(self.account.role)
+        # print(self.account.role)
         #----------------- End Tab Home -----------------
 
         '''
@@ -126,7 +130,16 @@ class BodyMain(CTkFrame):
         self.tab_view_content.add(f'Group')
         self.content_group = CTkFrame(self.tab_view_content.tab(f'Group'))
         self.content_group.pack(fill='both', expand=True)
-        self.tab_group_ui = TabGroupUI(self.content_group, self.account)
+        self.tab_group_ui = TabGroupUI(self.content_group, self.account, self)
+
+        '''
+            Tab Grade:
+        '''
+
+        self.tab_view_content.add(f'Grade')
+        self.content_grade = CTkFrame(self.tab_view_content.tab(f'Grade'))
+        self.content_grade.pack(fill='both', expand=True)
+        self.tab_grade_ui = TabGradeUI(self.content_grade, self.account)
 
         
         
@@ -140,9 +153,13 @@ class BodyMain(CTkFrame):
 
         if self.tab_view_content.get() == 'Home':
             self.table_view_home.update_values(self.get_values_thesis(self.thesis_dao.get_all()))
-            print('Home')
+            # print('Home')
         elif self.tab_view_content.get() == 'Group':
             self.tab_group_ui.init_ui()
+
+        elif self.tab_view_content.get() == 'Grade':
+            self.tab_grade_ui.init_ui()
+            # print('Grade')    
 
 
 
@@ -293,68 +310,72 @@ class BodyMain(CTkFrame):
 
 
         # Intro Frame CTN:
-        self.intro_frame = CTkFrame(self.intro_detail_left_frame)
-        self.intro_frame.pack(fill='x', pady=5, padx=5, side='top')
+        # self.intro_frame = CTkFrame(self.intro_detail_left_frame)
+        # self.intro_frame.pack(fill='x', pady=5, padx=5, side='top')
     
         # Avatar Frame:
-        self.avatar_frame = CTkFrame(self.intro_frame)
-        self.avatar_frame.pack(fill='y', pady=5, padx=5, side='left')
+        # self.avatar_frame = CTkFrame(self.intro_frame)
+        # self.avatar_frame.pack(fill='y', pady=5, padx=5, side='left')
         
-        self.ctn_avatar_frame = CTkFrame(self.avatar_frame)
-        self.ctn_avatar_frame.pack(padx=5, pady=5)
+        # self.ctn_avatar_frame = CTkFrame(self.avatar_frame)
+        # self.ctn_avatar_frame.pack(padx=5, pady=5)
 
-        self.label_avatar = CTkLabel(self.ctn_avatar_frame, text='', image=AssetUtil.get_icon('user'),)
-        self.label_avatar.pack(padx=5, pady=5, fill='x')
+        # self.label_avatar = CTkLabel(self.ctn_avatar_frame, text='', image=AssetUtil.get_icon('user'),)
+        # self.label_avatar.pack(padx=5, pady=5, fill='x')
 
-        self.label_name_lecturer = CTkLabel(self.ctn_avatar_frame, text=f'Lecturer:\n{self.selected_thesis.account.name}')
-        self.label_name_lecturer.pack(padx=5, pady=5, fill='x')
+        # self.label_name_lecturer = CTkLabel(self.ctn_avatar_frame, text=f'Lecturer:\n{self.selected_thesis.account.name}')
+        # self.label_name_lecturer.pack(padx=5, pady=5, fill='x')
         # ------------------------------------------------------
 
         # Intro Detail Left Frame:
-        self.inner_intro_detail_left_frame = CTkScrollableFrame(self.intro_frame)
-        self.inner_intro_detail_left_frame.pack(fill='both', pady=5, padx=5)
+        # self.inner_intro_detail_left_frame = CTkScrollableFrame(self.intro_frame)
+        # self.inner_intro_detail_left_frame.pack(fill='both', pady=5, padx=5)
 
-        self.ctn_critias_requirement_frame = CTkFrame(self.inner_intro_detail_left_frame)
+        # Body Intro Detail Frame:
+        self.scroll_detail_thesis = CTkScrollableFrame(self.intro_detail_left_frame, height=500)
+        self.scroll_detail_thesis.pack(fill='both', pady=5, padx=5, expand=True)
+
+        self.ctn_critias_requirement_frame = CTkFrame(self.scroll_detail_thesis)
         self.ctn_critias_requirement_frame.pack(fill='x')
 
         self.label_critias_requirement = CTkLabel(self.ctn_critias_requirement_frame, text='Criteria Requirement')
         self.label_critias_requirement.pack(fill='x', pady=5)
 
-        self.criterion_frame = CTkScrollableFrame(self.ctn_critias_requirement_frame, height=20)
-        self.criterion_frame.pack(fill='x', pady=5, side='top')
+        # self.criterion_frame = CTkScrollableFrame(self.ctn_critias_requirement_frame, height=20)
+        # self.criterion_frame.pack(fill='x', pady=5, side='top')
 
         for criterion in self.selected_thesis.criteria_list:
-            self.label_criterion_line = CTkLabel(self.criterion_frame, text=criterion.description)
+            self.label_criterion_line = CTkLabel(self.scroll_detail_thesis, text=criterion.description)
             self.label_criterion_line.pack(fill='x', pady=5)
         # --------------------------- Technology Requirement ---------------------------
-        self.ctn_tech_requirement_frame = CTkFrame(self.inner_intro_detail_left_frame)
+        self.ctn_tech_requirement_frame = CTkFrame(self.scroll_detail_thesis)
         self.ctn_tech_requirement_frame.pack(fill='x')
 
         self.label_tech_requirement = CTkLabel(self.ctn_tech_requirement_frame, text='Technology Requirement')
         self.label_tech_requirement.pack(fill='x', pady=5)
 
-        self.tech_requirement_frame = CTkScrollableFrame(self.ctn_tech_requirement_frame, height=20)
-        self.tech_requirement_frame.pack(fill='x', pady=5, side='top')
+        # self.tech_requirement_frame = CTkScrollableFrame(self.ctn_tech_requirement_frame, height=20)
+        # self.tech_requirement_frame.pack(fill='x', pady=5, side='top')
 
         for tech_require in self.selected_thesis.technology_requirement_list:
-            self.label_tech_require_line = CTkLabel(self.tech_requirement_frame, text=tech_require.name)
+            self.label_tech_require_line = CTkLabel(self.scroll_detail_thesis, text=tech_require.name)
             self.label_tech_require_line.pack(fill='x', pady=5)
 
         # Section Register Group
-        self.ctn_register_group_frame = CTkFrame(self.intro_detail_left_frame)
-        self.ctn_register_group_frame.pack(fill='x', pady=5, padx=5)
+        # self.ctn_register_group_frame = CTkFrame(self.scroll_detail_thesis)
+        # self.ctn_register_group_frame.pack(fill='x', pady=5, padx=5)
 
-        self.label_register_group = CTkLabel(self.ctn_register_group_frame, text='Register Group')
-        self.label_register_group.pack(fill='x', pady=5)
+        # self.label_register_group = CTkLabel(self.ctn_register_group_frame, text='Register Group')
+        # self.label_register_group.pack(fill='x', pady=5)
 
-        self.register_group = CTkFrame(self.ctn_register_group_frame)
-        self.register_group.pack(fill='x', pady=5)
+        # self.register_group = CTkFrame(self.ctn_register_group_frame)
+        # self.register_group.pack(fill='x', pady=5)
 
         self.button_out_group = None
         # List All Group in Register Group
         for group in self.selected_thesis.group_list:
 
-            self.group_frame = CTkFrame(self.register_group)
+            self.group_frame = CTkFrame(self.scroll_detail_thesis)
             self.group_frame.pack(fill='x', pady=5, padx=5)
 
             self.label_group = CTkLabel(self.group_frame, text=f'Group {group.id}')
@@ -381,7 +402,7 @@ class BodyMain(CTkFrame):
                 else:
                     if category in self.selection_tech_value:
                         self.selection_tech_value.remove(category)
-        print(self.selection_tech_value)
+        # print(self.selection_tech_value)
         return self.selection_tech_value
 
 

@@ -16,9 +16,10 @@ from app.custom.CalenderControl import CalenderControl
 
 class TabGroupUI(CTkFrame):
 
-    def __init__(self, master=None, loggin_account = None, **kw):
+    def __init__(self, master=None, loggin_account = None, base_master = None, **kw):
         super().__init__(master=master, **kw)
         self.master = master
+        self.base_master = base_master
         self.loggin_account = loggin_account
         self.pack(fill='both', expand=True)
         # ------------ Dao ------------
@@ -47,7 +48,7 @@ class TabGroupUI(CTkFrame):
         if hasattr(self, 'body_section'):
             self.body_section.destroy()
         self.body_section = CTkFrame(self,)
-        self.body_section.pack(fill='both', expand=True, side='top', padx=5, pady=(0, 5))
+        self.body_section.pack(fill='both', expand=True, padx=5, pady=(0, 5))
         self.implement_body()
 
 
@@ -92,17 +93,36 @@ class TabGroupUI(CTkFrame):
             self.inner_body_section = CTkFrame(self.body_section)
             self.inner_body_section.pack(fill='both', expand=True)
 
-            self.left_body = CTkFrame(self.inner_body_section, width=400)
-            self.left_body.pack(side='left', fill='y', padx=5)
+            self.left_body = CTkFrame(self.inner_body_section, width=200)
+            self.left_body.pack(side='left', fill='y', padx=5,)
+
+            CTkLabel(self.left_body, text='Action Task', width=200).pack(pady=5, padx=5)
+
+            self.button_open_slide_show_group_task = CTkButton(self.left_body, text='Group Task', command=self.on_open_slide_show_group_task)
+            self.button_open_slide_show_group_task.pack(pady=5, padx=5)
+
+            self.slide_show_group_task = SlideControl(self.base_master, -0.5, 0, options={
+                'rely': 0.1,
+                'relheight': 0.8,
+            }, time_duration=0.01)
+
+            self.inner_left_body = CTkScrollableFrame(self.slide_show_group_task, border_width=5)
+            self.inner_left_body.pack(fill='both', expand=True)
+
+            header_row = CTkFrame(self.inner_left_body)
+            header_row.pack(fill='x', pady=5, padx=5)
+
+            button_close = CTkButton(header_row, text='', image=AssetUtil.get_icon('x'), width=40, height=40, fg_color='red',command=self.on_open_slide_show_group_task)
+            button_close.pack(side='right', pady=5, padx=5)
 
             self.right_body = CTkFrame(self.inner_body_section)
             self.right_body.pack(side='right', fill='both', expand=True, padx=5)
 
             # ----------------- Left Body -----------------
-            self.label_name_member = CTkLabel(self.left_body, text='Member:', width=400)
+            self.label_name_member = CTkLabel(self.inner_left_body, text='Member:', width=400)
             self.label_name_member.pack(pady=5, padx=5)
 
-            self.scroll_frame_show_member = CTkScrollableFrame(self.left_body, height=50)
+            self.scroll_frame_show_member = CTkScrollableFrame(self.inner_left_body, height=50)
             self.scroll_frame_show_member.pack(fill='both', expand=True, pady=5, padx=5)
 
             #- Show member
@@ -113,11 +133,11 @@ class TabGroupUI(CTkFrame):
 
             # ---------------------
             
-            self.label_add_task = CTkLabel(self.left_body, text='Add Task:', width=400)
+            self.label_add_task = CTkLabel(self.inner_left_body, text='Add Task:', width=400)
             self.label_add_task.pack(pady=5, padx=5)
             
             # --------------------- Add Task ---------------------
-            self.frame_add_task = CTkFrame(self.left_body)
+            self.frame_add_task = CTkFrame(self.inner_left_body)
             self.frame_add_task.pack(fill='both', expand=True, pady=5, padx=5)
 
             self.label_name_task = CTkLabel(self.frame_add_task, text='Name:', width=400)
@@ -136,7 +156,7 @@ class TabGroupUI(CTkFrame):
             self.label_progress_task = CTkLabel(self.frame_add_task, text='Progress:', width=400)
             self.label_progress_task.pack()
 
-            self.slide_progress_task = CTkEntry(self.frame_add_task, width=200)
+            self.slide_progress_task = CTkSlider(self.frame_add_task, to=100, from_=0, width=200)
             self.slide_progress_task.pack(pady=5, padx=5)
             
             # Add member task
@@ -154,7 +174,7 @@ class TabGroupUI(CTkFrame):
 
             # Action Group:
 
-            self.frame_group_action = CTkFrame(self.left_body)
+            self.frame_group_action = CTkFrame(self.inner_left_body)
             self.frame_group_action.pack(fill='both', expand=True, pady=5, padx=5)
 
             self.btn_add_task = CTkButton(self.frame_group_action, text='Add Task', command=self.on_add_task)
@@ -172,8 +192,8 @@ class TabGroupUI(CTkFrame):
             self.btn_edit_task = CTkButton(self.frame_edit_task, text='Edit Task', command=self.on_edit_task)
             self.btn_edit_task.pack(side='left', pady=5, padx=5, fill='x')
 
-            self.btn_delete_task = CTkButton(self.frame_edit_task, text='Delete Task', command=self.on_delete_task)
-            self.btn_delete_task.pack(side='left', pady=5, padx=5, fill='x')
+            # self.btn_delete_task = CTkButton(self.frame_edit_task, text='Delete Task', command=self.on_delete_task)
+            # self.btn_delete_task.pack(side='left', pady=5, padx=5, fill='x')
 
 
             #----------------- Right Body -----------------
@@ -184,26 +204,29 @@ class TabGroupUI(CTkFrame):
             # Show all task
             self.implement_show_all_task()
 
-    def on_delete_task(self):
+    def on_open_slide_show_group_task(self):
+        self.slide_show_group_task.animate()
+
+    def on_delete_task(self, row, task_id=None):
         try:
             if self.loggin_account.role == 'student':
-                task_id = self.entry_id_task.get()
+                task_id = self.entry_id_task.get() if task_id == None else task_id
                 for task in self.loggin_account.task_list:
                     if task.id == int(task_id):
                         self.loggin_account.task_list.remove(task)
                         self.account_dao.update(self.loggin_account)
-                        print('Delete task success')
-                        self.implement_show_all_task()
+                        # print('Delete task success')
+                        row.destroy()
                         return
             else:
-                task_id = self.entry_id_task.get()
+                task_id = self.entry_id_task.get() if task_id == None else task_id
                 for group_account in self.selected_group.account_list:
                     for task in group_account.task_list:
                         if task.id == int(task_id):
                             group_account.task_list.remove(task)
                             self.account_dao.update(group_account)
-                            print('Delete task success')
-                            self.implement_show_all_task()
+                            # print('Delete task success')
+                            row.destroy()
                             return
         except Exception as e:
             print(f'Error: {e}')
@@ -227,9 +250,9 @@ class TabGroupUI(CTkFrame):
                         self.account_dao.update(member)
 
                         self.entry_name_task.delete(0, 'end')
-                        self.slide_progress_task.delete(0, 'end')
+                        # self.slide_progress_task.delete(0, 'end')
                         self.implement_show_all_task()
-                        print('Add task success')
+                        # print('Add task success')
                         return
             # Student
             name = self.entry_name_task.get()
@@ -241,9 +264,9 @@ class TabGroupUI(CTkFrame):
             self.account_dao.update(self.loggin_account)
 
             self.entry_name_task.delete(0, 'end')
-            self.slide_progress_task.delete(0, 'end')
+            # self.slide_progress_task.delete(0, 'end')
             self.implement_show_all_task()
-            print('Add task success')
+            # print('Add task success')
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -276,7 +299,6 @@ class TabGroupUI(CTkFrame):
 
             self.list_widgets_task = []
 
-
             for _task in _list_task:
                 _item_attr = {
                     'task_id': None,
@@ -298,7 +320,7 @@ class TabGroupUI(CTkFrame):
                 btn_add_comment = CTkButton(right_frame, text='', command=lambda task_id=_task[0]: self.on_add_comment(task_id), image=AssetUtil.get_icon('edit'), width=40, height=40)
                 btn_add_comment.pack(pady=5, padx=5, side='right')
 
-                btn_delete_task = CTkButton(right_frame, text='', command=lambda task_id=_task[0]: self.on_delete_task(task_id), image=AssetUtil.get_icon('delete'), width=40, height=40, fg_color='red')
+                btn_delete_task = CTkButton(right_frame, text='', command=lambda row=row, task_id=_task[0]: self.on_delete_task(row, task_id), image=AssetUtil.get_icon('delete'), width=40, height=40, fg_color='red')
                 btn_delete_task.pack(pady=5, padx=5, side='right')
 
                 # Update item attribute for each row to add comment items.
@@ -316,28 +338,8 @@ class TabGroupUI(CTkFrame):
             self.frame_progress_task.pack(fill='x', pady=5, padx=5)
 
             list_progress = [task[4] for task in _list_task]
-            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum(list_progress)/list_progress.__len__()}', width=400, font=('Arial', 17, 'bold'), text_color='green')
+            self.label_id_task = CTkLabel(self.frame_progress_task, text=f'Progress Task : {sum(list_progress)/list_progress.__len__() if list_progress.__len__()!=0 else 0}', width=400, font=('Arial', 17, 'bold'), text_color='green')
             self.label_id_task.pack(pady=5, padx=5, side='left')
-
-            # if hasattr(self, 'frame_evalute_task'):
-            #     self.frame_evalute_task.destroy()
-
-            # if self.loggin_account.role == 'lecturer':
-            #     self.frame_evalute_task = CTkFrame(self.right_body)
-            #     self.frame_evalute_task.pack(fill='both', expand=True, pady=5, padx=5)
-
-            #     self.label_id_task = CTkLabel(self.frame_evalute_task, text='Task ID:', width=400)
-            #     self.label_id_task.pack()
-
-            #     self.entry_id_task = CTkEntry(self.frame_evalute_task, width=200)
-            #     self.entry_id_task.pack(pady=5, padx=5)
-
-            #     self.btn_evalute_task = CTkButton(self.frame_evalute_task, text='Evalute Task', command=self.on_evalute_task)
-            #     self.btn_evalute_task.pack(pady=5, padx=5)
-
-
-
-
                 
         except Exception as e:
             print(f'Error: {e}')
@@ -345,7 +347,7 @@ class TabGroupUI(CTkFrame):
         
     def on_add_comment(self, task_id):
         try:
-            get_all_comment_of_task = [comment for comment in self.comment_dao.get_all() if comment.task_id == task_id]
+            get_all_comment_of_task = [comment for comment in self.task_dao.get(task_id).comment_list]
             # if get_all_comment_of_task != []:
             #     self.init_ui_comments_for_task(get_all_comment_of_task, task_id)
 
@@ -356,34 +358,99 @@ class TabGroupUI(CTkFrame):
                 # row.update()
 
                 if not hasattr(row, 'frame_comment') or row.open==False:
-                    print('Add comment success')
+                    # print('Add comment success')
                     row.open = True
 
                     row.frame_comment = CTkFrame(row, height=500)
                     row.frame_comment.pack(fill='both', pady=5, padx=5, expand=True)
 
-                    row_show_comment = CTkScrollableFrame(row.frame_comment, height=400)
-                    row_show_comment.pack(fill='both', pady=5, padx=5, expand=True)
+                    row.row_show_comment = CTkScrollableFrame(row.frame_comment, height=400)
+                    row.row_show_comment.pack(fill='both', pady=5, padx=5, expand=True)
 
-                    row_add_comment = CTkFrame(row.frame_comment)
-                    row_add_comment.pack(fill='x', pady=(0,5), padx=5, side='bottom')
+                        # Create row for comment
+                    if hasattr(row, 'wrapper_comment'):
+                        row.wrapper_comment.destroy()
 
-                    row.btn_add_comment = CTkButton(row_add_comment, text='', command=lambda: self.on_add_comment_task(self.task_dao.get(task_id), self.loggin_account, row), image=AssetUtil.get_icon('upload'), width=40, height=40)
+                    row.wrapper_comment = CTkFrame(row.row_show_comment)
+                    row.wrapper_comment.pack(fill='both', expand=True)
+
+                    row.row_add_comment = CTkFrame(row.frame_comment)
+                    row.row_add_comment.pack(fill='x', pady=(0,5), padx=5, side='bottom')
+
+                    row.btn_add_comment = CTkButton(row.row_add_comment, text='', command=lambda: self.on_add_comment_task(self.task_dao.get(task_id), self.loggin_account, row), image=AssetUtil.get_icon('upload'), width=40, height=40)
                     row.btn_add_comment.pack(pady=5, padx=5, side='right', fill='x')
 
-                    row.entry_comment = CTkTextbox(row_add_comment, height=50, width=500)
+                    row.entry_comment = CTkTextbox(row.row_add_comment, height=50, width=500)
                     row.entry_comment.pack(pady=5, padx=5, side='right', fill='x')
 
                     # Override scroll_frame_comment to row
-                    print(get_all_comment_of_task)
-                    if get_all_comment_of_task == []:
-                        ...
+                    # print(get_all_comment_of_task)
+                    if get_all_comment_of_task != []:
+                        self.init_ui_comments_for_task(get_all_comment_of_task, row)
 
                 else:
-                    print('Remove comment success')
+                    # print('Remove comment success')
                     row.frame_comment.destroy()
                     row.open = False
 
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+    
+    def init_ui_row_comment(self, comment, row):
+        try:
+            # Add comment to row
+            row_comment = CTkFrame(row.wrapper_comment)
+            row_comment.pack(fill='x')
+
+            if self.loggin_account.id == comment.account_id:
+                line_comment = CTkFrame(row_comment)
+                line_comment.pack(pady=5, padx=5, side='right')
+            else:
+                line_comment = CTkFrame(row_comment, width=300)
+                line_comment.pack(side='left', pady=5, padx=5)
+
+            frame_wrap_avatar = CTkFrame(line_comment)
+            frame_wrap_avatar.pack(side='left', padx=5, pady=5)
+
+            CTkLabel(frame_wrap_avatar,text='', image=AssetUtil.get_icon('user', resize=(20,20)) if self.loggin_account.path_img == None else pillow_image_open(self.loggin_account.path_img).resize(20,20)).pack(pady=5, padx=5, side='left')
+
+            CTkLabel(frame_wrap_avatar, text=self.account_dao.get(comment.account_id).name).pack(side='left', padx=5)
+
+            CTkLabel(line_comment, text=f'{comment.content}',).pack(pady=5, padx=15, side='left')
+
+            # Add delete comment when if this is current account
+            if self.loggin_account.id == comment.account_id:
+                right_frame = CTkFrame(line_comment)
+                right_frame.pack(side='right', fill='x', pady=5, padx=5)
+
+                btn_delete_comment = CTkButton(right_frame, text='', command=lambda comment=comment, row_comment=row_comment: self.on_delete_comment(comment, row_comment), image=AssetUtil.get_icon('x-circle'), width=25, height=25, fg_color='red')
+                btn_delete_comment.pack(pady=5, padx=5, side='right')
+                # print('Add comment success')
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+
+    def init_ui_comments_for_task(self, get_all_comment_of_task, row):
+        try:
+            if hasattr(row, 'wrapper_comment'):
+                    row.wrapper_comment.destroy()
+
+            row.wrapper_comment = CTkFrame(row.row_show_comment)
+            row.wrapper_comment.pack(fill='both', expand=True)
+
+            for comment in get_all_comment_of_task:    
+                self.init_ui_row_comment(comment, row)
+               
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+    
+    def on_delete_comment(self, comment, row_comment):
+        try:
+            self.comment_dao.delete(comment)
+            row_comment.destroy()
+            # print(comment.content)
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -396,7 +463,13 @@ class TabGroupUI(CTkFrame):
 
                 task.comment_list.append(comment)
                 self.task_dao.update(task)
-                print('Add comment success')
+                current_row.entry_comment.delete('1.0', 'end-1c')
+                # print('Add comment success')
+
+
+                # Add comment to row
+                self.init_ui_row_comment(comment, current_row)
+                # print('Add comment success')
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -419,7 +492,7 @@ class TabGroupUI(CTkFrame):
                         task.deadline = self.entry_deadline_task.get_value() if self.entry_deadline_task.get_value() != '' else task.deadline
 
                         self.account_dao.update(self.loggin_account)
-                        print('Edit task success')
+                        # print('Edit task success')
                         self.implement_show_all_task()
                         return
             else:
@@ -432,7 +505,7 @@ class TabGroupUI(CTkFrame):
                             task.deadline = self.entry_deadline_task.get_value() if self.entry_deadline_task.get_value() != '' else task.deadline
 
                             self.account_dao.update(group_account)
-                            print('Edit task success')
+                            # print('Edit task success')
                             self.implement_show_all_task()
                             return
         except Exception as e:
