@@ -67,11 +67,25 @@ class AccountUtil:
             for thesis in get_all_thesis:
                 if account.email == thesis.account.email:
                     return thesis.group_list
+            return []
+        except Exception as e:
+            print(f'Error: {e}')
+            return None
+    
+    @staticmethod
+    def get_all_thesis_of_account(account: Account):
+        try:
+            list_thesis = []
+            get_all_thesis = AccountUtil.thesis_dao.get_all()
+            for thesis in get_all_thesis:
+                if account.email == thesis.account.email:
+                    list_thesis.append(thesis)
+            return list_thesis
                 
         except Exception as e:
             print(f'Error: {e}')
             return None
-        
+
     @staticmethod
     def get_thesis_of_account(account: Account):
         try:
@@ -79,6 +93,15 @@ class AccountUtil:
             for thesis in get_all_thesis:
                 if account.email == thesis.account.email:
                     return thesis
+                
+        except Exception as e:
+            print(f'Error: {e}')
+            return None
+        
+    @staticmethod
+    def get_total_progress_of_account(account: Account):
+        try:
+            return sum([task.progress for task in account.task_list]) / account.task_list.__len__() if account.task_list.__len__() != 0 else 0
                 
         except Exception as e:
             print(f'Error: {e}')

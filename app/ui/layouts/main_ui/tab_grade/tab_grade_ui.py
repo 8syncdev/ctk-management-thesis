@@ -14,6 +14,8 @@ class TabGradeUI(CTkFrame):
         self.loggin_account = loggin_account
         self.base_master = base_master
         self.pack(fill='both', expand=True)
+        # DAO
+        self.grade_dao = GradeDAO()
         # Select group
         self.selected_group = None
         if self.loggin_account.role == 'lecturer':
@@ -56,7 +58,7 @@ class TabGradeUI(CTkFrame):
         self.right_header.pack(side='right', fill='x', pady=5, padx=5)
 
         if self.loggin_account.role=='lecturer':
-            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account)], command=self.on_change_group)
+            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[*[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account)], 'All'], command=self.on_change_group)
             self.menu_option_groups_of_lecturer.pack(side='right', padx=5)
 
     def on_change_group(self, e):
@@ -66,6 +68,13 @@ class TabGradeUI(CTkFrame):
                 if group.name == self.menu_option_groups_of_lecturer.get():
                     self.selected_group = group
                     self.init_ui()
+                    self.implement_right_body(selected_group=group)
+                    self.menu_option_groups_of_lecturer.set(group.name)
+                elif self.menu_option_groups_of_lecturer.get() == 'All':
+                    self.init_ui()
+                    self.implement_right_body()
+                    self.menu_option_groups_of_lecturer.set('All')
+                    return
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -86,8 +95,38 @@ class TabGradeUI(CTkFrame):
         self.implement_right_body()
 
     def implement_left_body(self):
-        self.button_open_eval_grade = CTkButton(self.left_body, text='Evaluate Grade', command=self.open_eval_grade)
+        self.button_open_eval_grade = CTkButton(self.left_body, text='Evaluate Grade', command=lambda: self.slide_control_evel_grade.animate())
         self.button_open_eval_grade.pack(pady=5, padx=5, fill='x')
+
+        self.init_ui_slide_control_evel_grade()
+        
+
+    def init_ui_slide_control_evel_grade(self):
+        self.slide_control_evel_grade = SlideControl(self.base_master, -0.5, 0, options={
+            'rely': 0.05,
+            'relheight': 0.95,
+        }, time_duration=0.01)
+
+        self.frame_detail_left = CTkFrame(self.slide_control_evel_grade, border_width=5)
+        self.frame_detail_left.pack(fill='both', expand=True)
+
+        # Intro Detail Left Frame
+        self.intro_detail_left_frame = CTkFrame(self.frame_detail_left, height=500)
+        self.intro_detail_left_frame.pack(fill='both', pady=5, padx=5, expand=True)
+
+        # Inner Header Frame
+        self.inner_header_frame_detail = CTkFrame(self.intro_detail_left_frame)
+        self.inner_header_frame_detail.pack(fill='x', pady=5, padx=5)
+
+        self.label_inner_header = CTkLabel(self.inner_header_frame_detail, text='Evaluate Grade')
+        self.label_inner_header.pack(side='left', padx=5, pady=5, fill='x')
+
+        self.button_back = CTkButton(self.inner_header_frame_detail, text='', command=lambda: self.slide_control_evel_grade.animate(), image=AssetUtil.get_icon('x-circle'))
+        self.button_back.pack(side='right', padx=5, pady=5)
+
+        
+        
+
 
     def implement_right_body(self, selected_group=None):
         if hasattr(self, 'wrapped_view_right_body'):
@@ -112,6 +151,8 @@ class TabGradeUI(CTkFrame):
                     row.pack(fill='x', padx=5, pady=2)
                     self.init_ui_member_group(row, account)
 
+
+
     def init_ui_member_group(self, row, account):
         self.label_name_member = CTkLabel(row, text=f'{account.name}', width=200)
         self.label_name_member.pack(side='left', padx=5, pady=5)
@@ -119,11 +160,39 @@ class TabGradeUI(CTkFrame):
         self.label_role_member = CTkLabel(row, text=f'Group: {AccountUtil.get_joined_group(account).name if AccountUtil.get_joined_group(account) != None else "No Group"}, Thesis: {AccountUtil.get_thesis_of_account(self.loggin_account).name}', width=100)
         self.label_role_member.pack(side='left', padx=5, pady=5)
 
-        self.button_view_detail = CTkButton(row, text='View Detail', command=lambda: self.view_detail_member(account))
-        self.button_view_detail.pack(side='right', padx=5, pady=5)
+        self.label_progress = CTkLabel(row, text=f'Progress: {AccountUtil.get_total_progress_of_account(account)}%', width=100, font=get_style('font_bold_italic'), text_color=get_style('info_active'))
+        self.label_progress.pack(side='left', padx=5, pady=5)
 
+        self.button_open_eval_grade = CTkButton(row, text='Evaluate', image=AssetUtil.get_icon('edit-2', resize=(20, 20)), fg_color=get_style('info_active'), text_color=get_style('white'), command=lambda account=account: self.open_eval_grade(account))
+        self.button_open_eval_grade.pack(side='right', padx=5, pady=5)
         
 
+    def open_eval_grade(self, account):
+        self.slide_control_evel_grade.animate_backwards()
 
-    def open_eval_grade(self):
-        ...
+        # Data to submit
+        get_thesis_of_account = AccountUtil.get_thesis_of_account(self.loggin_account)
+
+        # Inner Body Frame from func init_ui_slide_control_evel_grade
+        if hasattr(self, 'inner_body_frame_detail'):
+            self.inner_body_frame_detail.destroy()
+        self.inner_body_frame_detail = CTkFrame(self.intro_detail_left_frame)
+        self.inner_body_frame_detail.pack(fill='both', expand=True)
+
+        # Inner Body Frame
+        self.inner_body_frame = CTkFrame(self.inner_body_frame_detail)
+        self.inner_body_frame.pack(fill='both', expand=True)
+
+        self.score_of_account = CTkSlider(self.inner_body_frame, from_=0, to=100, orientation='horizontal', width=300)
+        self.score_of_account.pack(pady=5, padx=5, fill='x')
+
+        self.label_info_account = CTkLabel(self.inner_body_frame, text=f'Full Name: {account.name}\nEmail: {account.email}\nRole: {account.role}\nGroup: {AccountUtil.get_joined_group(account).name if AccountUtil.get_joined_group(account) != None else "No Group"}\nThesis: {get_thesis_of_account.name if get_thesis_of_account != None else "No Thesis"}', width=300, font=get_style('font_bold_italic'))
+        self.label_info_account.pack(pady=5, padx=5)
+
+        self.label_info_thesis = CTkLabel(self.inner_body_frame, text=f'Thesis: {get_thesis_of_account.name}', width=300, font=get_style('font_bold_italic'))
+        self.label_info_thesis.pack(pady=5, padx=5)
+
+
+        self.after(1000, self.slide_control_evel_grade.animate)
+
+

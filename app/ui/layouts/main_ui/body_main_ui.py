@@ -139,7 +139,7 @@ class BodyMain(CTkFrame):
         self.tab_view_content.add(f'Grade')
         self.content_grade = CTkFrame(self.tab_view_content.tab(f'Grade'))
         self.content_grade.pack(fill='both', expand=True)
-        self.tab_grade_ui = TabGradeUI(self.content_grade, self.account)
+        self.tab_grade_ui = TabGradeUI(self.content_grade, self.account, self)
 
         
         

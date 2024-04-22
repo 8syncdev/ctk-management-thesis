@@ -29,7 +29,7 @@ class TabGroupUI(CTkFrame):
         self.comment_dao = CommentDAO()
         # print(AccountUtil.get_joined_group(self.loggin_account))
         # ----------------- Variable -----------------
-        self.selected_group = None
+        self.selected_group = AccountUtil.get_joined_group(self.loggin_account) if AccountUtil.get_joined_group(self.loggin_account) != None else None
         if self.loggin_account.role == 'lecturer':
             self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
 
@@ -54,6 +54,8 @@ class TabGroupUI(CTkFrame):
 
     def implement_header(self):
         # ----------------- Left Header -----------------
+        if hasattr(self, 'left_header'):
+            self.left_header.destroy()
         self.left_header = CTkFrame(self.header_section, width=300, height=50)
         self.left_header.pack(side='left', fill='x', pady=5, padx=5)
 
@@ -71,8 +73,28 @@ class TabGroupUI(CTkFrame):
         self.right_header.pack(side='right', fill='x', pady=5, padx=5)
 
         if self.loggin_account.role=='lecturer':
-            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account)], command=self.on_change_group)
+            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account) if self.selected_group != None], command=self.on_change_group)
             self.menu_option_groups_of_lecturer.pack(side='right', padx=5)
+            self.menu_option_groups_of_lecturer.set(self.menu_option_groups_of_lecturer._values[0])
+
+            self.menu_option_thesis_of_lecturer = CTkOptionMenu(self.right_header, values=[thesis.name for thesis in AccountUtil.get_all_thesis_of_account(self.loggin_account)], command=self.on_change_thesis)
+            self.menu_option_thesis_of_lecturer.pack(side='right', padx=5)
+    
+    def on_change_thesis(self, e):
+        try:
+            get_all_thesis = AccountUtil.get_all_thesis_of_account(self.loggin_account)
+            for thesis in get_all_thesis:
+                if thesis.name == self.menu_option_thesis_of_lecturer.get():
+                    self.menu_option_groups_of_lecturer.configure(values=[group.name for group in thesis.group_list])
+                    self.menu_option_thesis_of_lecturer.set(thesis.name)
+                    self.menu_option_groups_of_lecturer.set(thesis.group_list[0].name)
+                    self.label_name_group.configure(text=f'Group: {thesis.group_list[0].name}')
+                    # Re-Implement body
+                    self.selected_group = thesis.group_list[0]
+                    self.implement_body()
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
 
     def on_change_group(self, e):
         try:
@@ -80,7 +102,9 @@ class TabGroupUI(CTkFrame):
             for group in get_all_group:
                 if group.name == self.menu_option_groups_of_lecturer.get():
                     self.selected_group = group
-                    self.init_ui()
+                    self.menu_option_groups_of_lecturer.set(group.name)
+                    self.label_name_group.configure(text=f'Group: {group.name}')
+                    self.implement_body()
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -126,7 +150,7 @@ class TabGroupUI(CTkFrame):
             self.scroll_frame_show_member.pack(fill='both', expand=True, pady=5, padx=5)
 
             #- Show member
-            get_all_memeber = AccountUtil.get_joined_group(self.loggin_account).account_list if self.loggin_account.role == 'student' else self.selected_group.account_list
+            get_all_memeber = AccountUtil.get_joined_group(self.loggin_account).account_list if self.loggin_account.role == 'student' else self.selected_group.account_list.remove(self.loggin_account) if self.loggin_account in self.selected_group.account_list else self.selected_group.account_list
 
             for member in get_all_memeber:
                 CTkLabel(self.scroll_frame_show_member, text=member.name).pack(pady=5, padx=5)
@@ -163,7 +187,7 @@ class TabGroupUI(CTkFrame):
             if hasattr(self, 'member_task'):
                     self.member_task.destroy()
 
-            if self.loggin_account.role == 'lecturer':
+            if self.loggin_account.role == 'lecturer' and get_all_memeber != []:
                 self.label_name_member_task = CTkLabel(self.frame_add_task, text='Member:', width=400)
                 self.label_name_member_task.pack(pady=5, padx=5)
                 
@@ -238,6 +262,22 @@ class TabGroupUI(CTkFrame):
     def on_add_task(self):
         try:
             if self.loggin_account.role == 'lecturer':
+                if self.selected_group.account_list == []:
+                    name = self.entry_name_task.get()
+                    deadline = self.entry_deadline_task.get_value()
+                    progress = self.slide_progress_task.get()
+
+                    task = Task(name=name, progress=progress, deadline=deadline)
+                    # task.account_list.append(self.loggin_account)
+                    self.loggin_account.task_list.append(task)
+                    self.account_dao.update(self.loggin_account)
+                    self.selected_group.task_list.append(task)
+                    self.group_dao.update(self.selected_group)
+
+                    self.entry_name_task.delete(0, 'end')
+                    # self.slide_progress_task.delete(0, 'end')
+                    self.implement_show_all_task()
+                    return
                 member_email = self.member_task.get()
                 for member in self.selected_group.account_list:
                     if member.email == member_email:
@@ -246,8 +286,10 @@ class TabGroupUI(CTkFrame):
                         progress = self.slide_progress_task.get()
 
                         task = Task(name=name, progress=progress, deadline=deadline)
-                        member.task_list.append(task)
+                        task.account_list.append(member)
                         self.account_dao.update(member)
+                        self.selected_group.task_list.append(task)
+                        self.group_dao.update(self.selected_group)
 
                         self.entry_name_task.delete(0, 'end')
                         # self.slide_progress_task.delete(0, 'end')
@@ -260,8 +302,11 @@ class TabGroupUI(CTkFrame):
             progress = self.slide_progress_task.get()
 
             task = Task(name=name, progress=progress, deadline=deadline)
+            # task.account_list.append(self.loggin_account)
             self.loggin_account.task_list.append(task)
             self.account_dao.update(self.loggin_account)
+            self.selected_group.task_list.append(task)
+            self.group_dao.update(self.selected_group)
 
             self.entry_name_task.delete(0, 'end')
             # self.slide_progress_task.delete(0, 'end')
@@ -272,11 +317,25 @@ class TabGroupUI(CTkFrame):
             pass
 
     def get_all_task(self):
-        get_all_member = AccountUtil.get_joined_group(self.loggin_account).account_list if self.loggin_account.role == 'student' else self.selected_group.account_list
+        # get_all_member = AccountUtil.get_joined_group(self.loggin_account).account_list if self.loggin_account.role == 'student' else self.selected_group.account_list
+        # _list_task = []
+        # for member in get_all_member:
+        #     if member.task_list != []:
+        #         for task in member.task_list:
+        #             _list_task.append((
+        #                 task.id,
+        #                 member.name,
+        #                 member.email,
+        #                 task.name,
+        #                 task.progress,
+        #                 task.deadline
+        #             ))
+        # return _list_task
+        get_all_task_of_group = self.selected_group.task_list
         _list_task = []
-        for member in get_all_member:
-            if member.task_list != []:
-                for task in member.task_list:
+        for task in get_all_task_of_group:
+            if task.account_list != []:
+                for member in task.account_list:
                     _list_task.append((
                         task.id,
                         member.name,
@@ -285,6 +344,15 @@ class TabGroupUI(CTkFrame):
                         task.progress,
                         task.deadline
                     ))
+            else: 
+                _list_task.append((
+                    task.id,
+                    self.loggin_account.name,
+                    self.loggin_account.email,
+                    task.name,
+                    task.progress,
+                    task.deadline
+                ))
         return _list_task
 
     def implement_show_all_task(self):

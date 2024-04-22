@@ -63,6 +63,14 @@ task_comment_association = Table(
     Column('comment_id', Integer, ForeignKey('comment.id'))
 )
 
+# Define association table for the many-to-many relationship between Group and Task
+group_task_association = Table(
+    'group_task_association',
+    Base.metadata,
+    Column('group_id', Integer, ForeignKey('group.id')),
+    Column('task_id', Integer, ForeignKey('task.id'))
+)
+
 
 # Define the Task model
 class Task(Base):
@@ -76,6 +84,8 @@ class Task(Base):
     account_list = relationship('Account', secondary=task_account_association, back_populates='task_list')
     # Define the many-to-many relationship between Task and Comment
     comment_list = relationship('Comment', secondary=task_comment_association, back_populates='task_list')
+    # Define the many-to-many relationship between Group and Task
+    group_list = relationship('Group', secondary=group_task_association, back_populates='task_list')
 
 # Define the Group model
 class Group(Base):
@@ -88,6 +98,8 @@ class Group(Base):
 
     account_list = relationship('Account', secondary=account_group_association, back_populates='group_list')
     thesis_list = relationship('Thesis', secondary=group_thesis_association, back_populates='group_list')
+    # Define the many-to-many relationship between Group and Task
+    task_list = relationship('Task', secondary=group_task_association, back_populates='group_list')
 
 # Define association table for the many-to-many relationship between Thesis and Criterion
 thesis_criterion_association = Table(
@@ -172,8 +184,20 @@ class Comment (Base):
     account = relationship('Account')
     task_list = relationship('Task', secondary=task_comment_association, back_populates='comment_list')
 
+# Define the Grade model
+class Grade(Base):
+    __tablename__ = 'grade'
 
+    id = Column(Integer, primary_key=True)
+    score = Column(Float)
+    created_at = Column(DateTime, default=datetime.datetime.now())
+    # Define the one-to-many relationship between Grade and Account
+    account_id = Column(Integer, ForeignKey('account.id'))
+    # Define the one-to-many relationship between Grade and Thesis
+    thesis_id = Column(Integer, ForeignKey('thesis.id'))
 
+    account = relationship('Account')
+    thesis = relationship('Thesis')
 
 
 
