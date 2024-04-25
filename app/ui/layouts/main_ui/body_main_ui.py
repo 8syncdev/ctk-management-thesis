@@ -6,6 +6,7 @@ from app.asset.styles.style import *
 from app.custom.SlideControl import SlideControl
 from app.ui.layouts.main_ui.tab_group.tab_group_ui import TabGroupUI
 from app.ui.layouts.main_ui.tab_grade.tab_grade_ui import TabGradeUI
+from app.ui.layouts.main_ui.tab_sumary.tab_sumary_ui import TabSumaryUI
 
 
 class BodyMain(CTkFrame):
@@ -140,6 +141,15 @@ class BodyMain(CTkFrame):
         self.content_grade = CTkFrame(self.tab_view_content.tab(f'Grade'))
         self.content_grade.pack(fill='both', expand=True)
         self.tab_grade_ui = TabGradeUI(self.content_grade, self.account, self)
+
+        '''
+            Tab Sumary:
+        '''
+
+        self.tab_view_content.add(f'Sumary')
+        self.content_sumary = CTkFrame(self.tab_view_content.tab(f'Sumary'))
+        self.content_sumary.pack(fill='both', expand=True)
+        self.tab_sumary_ui = TabSumaryUI(self.content_sumary, self.account, self)
 
         
         

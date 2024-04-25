@@ -9,7 +9,7 @@ from app.db.dao.technology_require_dao import TechnologyRequirementDAO
 from app.db.dao.criterion_dao import CriterionDAO
 from app.db.dao.comment_dao import CommentDAO
 from app.db.dao.grade_dao import GradeDAO
-
+from app.db.dao.grade_by_council_dao import GradeByCouncilDAO
 
 
 
@@ -17,4 +17,4 @@ from app.db.dao.grade_dao import GradeDAO
 from app.db.interface_dao import InterfaceDAO, _T, Generic
 
 #----------------- Models ----------------
-from app.db.init_db import Account, Group, Task, Thesis, TechnologyCategory, TechnologyRequirement, Criterion, Comment, Grade
+from app.db.init_db import Account, Group, Task, Thesis, TechnologyCategory, TechnologyRequirement, Criterion, Comment, Grade, GradeByCouncil

@@ -29,6 +29,15 @@ task_account_association = Table(
     Column('task_id', Integer, ForeignKey('task.id')),
     Column('account_id', Integer, ForeignKey('account.id'))
 )
+
+# Define association table for the many-to-many relationship between GradeByCouncil and Account
+grade_by_council_account_association = Table(
+    'grade_by_council_account_association',
+    Base.metadata,
+    Column('grade_by_council_id', Integer, ForeignKey('grade_by_council.id')),
+    Column('account_id', Integer, ForeignKey('account.id'))
+)
+
 # Define the Account model
 class Account(Base):
     __tablename__ = 'account'
@@ -45,6 +54,8 @@ class Account(Base):
     thesis = relationship('Thesis', back_populates='account')
     # Define the many-to-many relationship between Task and Account
     task_list = relationship('Task', secondary=task_account_association, back_populates='account_list')
+    # Define the one-to-many relationship between GradeByCouncil and Account
+    grade_by_council_list = relationship('GradeByCouncil', secondary=grade_by_council_account_association, back_populates='account_list')
 
 # Define association table for the many-to-many relationship between Thesis and Group
 group_thesis_association = Table(
@@ -198,6 +209,18 @@ class Grade(Base):
 
     account = relationship('Account')
     thesis = relationship('Thesis')
+
+
+
+# Grade by council
+class GradeByCouncil(Base):
+    __tablename__ = 'grade_by_council'
+    id = Column(Integer, primary_key=True)
+    thesis_id = Column(Integer, ForeignKey('thesis.id'))
+
+    thesis = relationship('Thesis')
+    account_list = relationship('Account', secondary=grade_by_council_account_association, back_populates='grade_by_council_list')
+
 
 
 

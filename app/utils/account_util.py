@@ -105,4 +105,18 @@ class AccountUtil:
                 
         except Exception as e:
             print(f'Error: {e}')
-            return None
+            return 
+        
+    @staticmethod
+    def get_thesis_of_selected_group(group: Group):
+        base_not_found = {
+            'name': 'No thesis',
+        }
+        try:
+            for thesis in AccountUtil.thesis_dao.get_all():
+                if group in thesis.group_list:
+                    return thesis
+            return base_not_found
+        except Exception as e:
+            print(f'Error: {e}')
+            return base_not_found

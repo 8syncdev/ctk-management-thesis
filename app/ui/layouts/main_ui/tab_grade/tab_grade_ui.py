@@ -16,13 +16,13 @@ class TabGradeUI(CTkFrame):
         self.pack(fill='both', expand=True)
         # DAO
         self.grade_dao = GradeDAO()
-        # Select group
-        self.selected_group = None
-        if self.loggin_account.role == 'lecturer':
-            self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
         self.init_ui()
 
     def init_ui(self):
+        # Selected Group
+        self.selected_group = AccountUtil.get_joined_group(self.loggin_account) if AccountUtil.get_joined_group(self.loggin_account) != None else None
+        if self.loggin_account.role == 'lecturer':
+            self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
         # ----------------- Header -----------------
         if hasattr(self, 'header_section'):
             self.header_section.destroy()
@@ -58,8 +58,27 @@ class TabGradeUI(CTkFrame):
         self.right_header.pack(side='right', fill='x', pady=5, padx=5)
 
         if self.loggin_account.role=='lecturer':
-            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[*[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account)], 'All'], command=self.on_change_group)
+            self.menu_option_groups_of_lecturer = CTkOptionMenu(self.right_header, values=[group.name for group in AccountUtil.get_all_group_of_thesis(self.loggin_account) if self.selected_group != None], command=self.on_change_group)
             self.menu_option_groups_of_lecturer.pack(side='right', padx=5)
+            self.menu_option_groups_of_lecturer.set(self.menu_option_groups_of_lecturer._values[0])
+
+            self.menu_option_thesis_of_lecturer = CTkOptionMenu(self.right_header, values=[thesis.name for thesis in AccountUtil.get_all_thesis_of_account(self.loggin_account)], command=self.on_change_thesis)
+            self.menu_option_thesis_of_lecturer.pack(side='right', padx=5)
+    def on_change_thesis(self, e):
+        try:
+            get_all_thesis = AccountUtil.get_all_thesis_of_account(self.loggin_account)
+            for thesis in get_all_thesis:
+                if thesis.name == self.menu_option_thesis_of_lecturer.get():
+                    self.menu_option_groups_of_lecturer.configure(values=[group.name for group in thesis.group_list])
+                    self.menu_option_thesis_of_lecturer.set(thesis.name)
+                    self.menu_option_groups_of_lecturer.set(thesis.group_list[0].name)
+                    self.label_name_group.configure(text=f'Group: {thesis.group_list[0].name}')
+                    # Re-Implement body
+                    self.selected_group = thesis.group_list[0]
+                    self.implement_right_body(selected_group=thesis.group_list[0])
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
 
     def on_change_group(self, e):
         try:
@@ -81,10 +100,14 @@ class TabGradeUI(CTkFrame):
 
     def implement_body(self):
         # ----------------- Left Body -----------------
+        if hasattr(self, 'left_body'):
+            self.left_body.destroy()
         self.left_body = CTkFrame(self.body_section, width=300)
         self.left_body.pack(side='left', fill='y', padx=5)
 
         # ----------------- Right Body -----------------
+        if hasattr(self, 'right_body'):
+            self.right_body.destroy()
         self.right_body = CTkFrame(self.body_section)
         self.right_body.pack(side='right', fill='both', expand=True, padx=5)
 

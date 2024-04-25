@@ -29,13 +29,14 @@ class TabGroupUI(CTkFrame):
         self.comment_dao = CommentDAO()
         # print(AccountUtil.get_joined_group(self.loggin_account))
         # ----------------- Variable -----------------
-        self.selected_group = AccountUtil.get_joined_group(self.loggin_account) if AccountUtil.get_joined_group(self.loggin_account) != None else None
-        if self.loggin_account.role == 'lecturer':
-            self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
+        
 
         self.init_ui()
 
     def init_ui(self):
+        self.selected_group = AccountUtil.get_joined_group(self.loggin_account) if AccountUtil.get_joined_group(self.loggin_account) != None else None
+        if self.loggin_account.role == 'lecturer':
+            self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
         # ----------------- Header -----------------
         if hasattr(self, 'header_section'):
             self.header_section.destroy()
@@ -65,8 +66,11 @@ class TabGroupUI(CTkFrame):
             name_group = AccountUtil.get_joined_group(self.loggin_account).name if AccountUtil.get_joined_group(self.loggin_account) != None else "No Group"
         self.label_name_group = CTkLabel(self.left_header, 
                                          text=f'Group: {AccountUtil.get_joined_group(self.loggin_account).name if AccountUtil.get_joined_group(self.loggin_account) != None and self.loggin_account.role=="student" else name_group}', 
-                                         width=300)
-        self.label_name_group.pack(pady=5, padx=5)
+                                         width=50)
+        self.label_name_group.pack(pady=5, padx=5, side='left')
+
+        self.label_name_thesis = CTkLabel(self.left_header, text=f'''Thesis: {AccountUtil.get_thesis_of_selected_group(self.selected_group).name if self.selected_group != None else 'No thesis'} ''', width=200, font=get_style('font_lg_bold'), text_color=get_style('dark_active'))
+        self.label_name_thesis.pack(pady=5, padx=5, side='left')
 
         # ----------------- Right Header -----------------
         self.right_header = CTkFrame(self.header_section, width=300, height=50)
@@ -91,20 +95,24 @@ class TabGroupUI(CTkFrame):
                     self.label_name_group.configure(text=f'Group: {thesis.group_list[0].name}')
                     # Re-Implement body
                     self.selected_group = thesis.group_list[0]
-                    self.implement_body()
+            self.implement_body()
+            self.on_change_group()
         except Exception as e:
             print(f'Error: {e}')
             pass
 
-    def on_change_group(self, e):
+    def on_change_group(self, e=None):
         try:
+            self.slide_show_group_task.animate_backwards()
             get_all_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)
+            # print([group.name for group in get_all_group])
+            # print(self.menu_option_groups_of_lecturer.get())
             for group in get_all_group:
                 if group.name == self.menu_option_groups_of_lecturer.get():
                     self.selected_group = group
                     self.menu_option_groups_of_lecturer.set(group.name)
                     self.label_name_group.configure(text=f'Group: {group.name}')
-                    self.implement_body()
+            self.implement_body()
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -232,26 +240,20 @@ class TabGroupUI(CTkFrame):
         self.slide_show_group_task.animate()
 
     def on_delete_task(self, row, task_id=None):
+        print('Delete task')
+        print(task_id)
+        print([task.id for task in self.loggin_account.task_list])
         try:
-            if self.loggin_account.role == 'student':
-                task_id = self.entry_id_task.get() if task_id == None else task_id
-                for task in self.loggin_account.task_list:
+            task_id = self.entry_id_task.get() if task_id == None else task_id
+            for account in self.account_dao.get_all():
+                for task in account.task_list:
                     if task.id == int(task_id):
-                        self.loggin_account.task_list.remove(task)
-                        self.account_dao.update(self.loggin_account)
+                        account.task_list.remove(task)
+                        self.account_dao.update(account)
+                        self.task_dao.delete(task)
                         # print('Delete task success')
                         row.destroy()
                         return
-            else:
-                task_id = self.entry_id_task.get() if task_id == None else task_id
-                for group_account in self.selected_group.account_list:
-                    for task in group_account.task_list:
-                        if task.id == int(task_id):
-                            group_account.task_list.remove(task)
-                            self.account_dao.update(group_account)
-                            # print('Delete task success')
-                            row.destroy()
-                            return
         except Exception as e:
             print(f'Error: {e}')
             pass
@@ -335,24 +337,16 @@ class TabGroupUI(CTkFrame):
         _list_task = []
         for task in get_all_task_of_group:
             if task.account_list != []:
-                for member in task.account_list:
                     _list_task.append((
                         task.id,
-                        member.name,
-                        member.email,
+                        task.account_list[0].name,
+                        task.account_list[0].email,
                         task.name,
                         task.progress,
                         task.deadline
-                    ))
-            else: 
-                _list_task.append((
-                    task.id,
-                    self.loggin_account.name,
-                    self.loggin_account.email,
-                    task.name,
-                    task.progress,
-                    task.deadline
-                ))
+                    ))   
+        print(self.selected_group.name)
+        print(_list_task)
         return _list_task
 
     def implement_show_all_task(self):
@@ -378,9 +372,13 @@ class TabGroupUI(CTkFrame):
                 innerr_frame = CTkFrame(row)
                 innerr_frame.pack(fill='x', pady=5, padx=5, side='top')
 
-                content_label= f'Task ID: {_task[0]}, Name: {_task[1]}|{_task[2]}, Task: {_task[3]}\n Progress: {_task[4]}, Deadline: {_task[5]}'
+                content_label= f'Task ID: {_task[0]}, Author Task: {_task[1]}\nEmail:{_task[2]}\nTask: {_task[3]}\n Progress: {_task[4]}, Deadline: {_task[5]}'
 
-                CTkLabel(innerr_frame, text=content_label, anchor='w').pack(pady=5, padx=5, side='left')
+                CTkLabel(innerr_frame, text=content_label, anchor='w', width=200, font=get_style('font_bold'), text_color=get_style('dark_active')).pack(pady=5, padx=5, side='left')
+
+                contant_participant = '\n'.join([account.name for account in self.task_dao.get(_task[0]).account_list if account.role == 'student'])
+                label_participant = CTkLabel(innerr_frame, text=f'Participant:\n{contant_participant}', width=200, font=get_style('font_italic'), text_color=get_style('secondary_active'))
+                label_participant.pack(pady=5, padx=5, side='left')
 
                 right_frame = CTkFrame(innerr_frame)
                 right_frame.pack(side='right', fill='x', pady=5, padx=5)
@@ -390,6 +388,9 @@ class TabGroupUI(CTkFrame):
 
                 btn_delete_task = CTkButton(right_frame, text='', command=lambda row=row, task_id=_task[0]: self.on_delete_task(row, task_id), image=AssetUtil.get_icon('delete'), width=40, height=40, fg_color='red')
                 btn_delete_task.pack(pady=5, padx=5, side='right')
+
+                btn_get_task = CTkButton(right_frame, text='', command=lambda task_id=_task[0], label_participant=label_participant: self.on_get_task(task_id, label_participant), image=AssetUtil.get_icon('target'), width=40, height=40)
+                btn_get_task.pack(pady=5, padx=5, side='right')
 
                 # Update item attribute for each row to add comment items.
                 _item_attr['task_id'] = _task[0]
@@ -413,6 +414,23 @@ class TabGroupUI(CTkFrame):
             print(f'Error: {e}')
             return None
         
+
+    def on_get_task(self, task_id, label_participant):
+        try:
+            get_task = self.task_dao.get(task_id)
+            if get_task in self.loggin_account.task_list:
+                self.loggin_account.task_list.remove(get_task)
+            else:
+                self.loggin_account.task_list.append(get_task)
+            self.account_dao.update(self.loggin_account)
+
+            content_participant = '\n'.join([account.name for account in get_task.account_list if account.role == 'student'])
+            label_participant.configure(text=f'Participant:\n{content_participant}')
+            #  1 task has many account
+        except Exception as e:
+            print(f'Error: {e}')
+            pass
+
     def on_add_comment(self, task_id):
         try:
             get_all_comment_of_task = [comment for comment in self.task_dao.get(task_id).comment_list]

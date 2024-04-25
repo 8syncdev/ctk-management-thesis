@@ -35,16 +35,22 @@ COLOR_STYLE = {
 
 
 FONT_STYLE = {
-    'font': ('Arial', 17),
-    'font_bold': ('Arial', 17, 'bold'),
-    'font_italic': ('Arial', 17, 'italic'),
-    'font_bold_italic': ('Arial', 17, 'bold', 'italic'),
-    'font_size': 17,
-    'font_size_large': 20,
+    'font': ('Arial', 13),
+    'font_bold': ('Arial', 13, 'bold'),
+    'font_italic': ('Arial', 13, 'italic'),
+    'font_bold_italic': ('Arial', 13, 'bold', 'italic'),
+    'font_sm_bold': ('Arial', 8, 'bold'),
+    'font_sm_italic': ('Arial', 8, 'italic'),
+    'font_sm_bold_italic': ('Arial', 8, 'bold', 'italic'),
+    'font_lg_bold': ('Arial', 16, 'bold'),
+    'font_lg_italic': ('Arial', 16, 'italic'),
+    'font_lg_bold_italic': ('Arial', 16, 'bold', 'italic'),
+    'font_size': 13,
+    'font_size_large': 16,
     'font_size_small': 8,
 }
 
-KEY_FONT_STYLE = Literal['font', 'font_bold', 'font_italic', 'font_bold_italic', 'font_size', 'font_size_large', 'font_size_small']
+KEY_FONT_STYLE = Literal['font', 'font_bold', 'font_italic', 'font_bold_italic', 'font_sm_bold', 'font_sm_italic', 'font_sm_bold_italic', 'font_lg_bold', 'font_lg_italic', 'font_lg_bold_italic', 'font_size', 'font_size_large', 'font_size_small']
 
 KEY_COLOR_STYLE = Literal['primary', 'primary_hover', 'primary_active', 'secondary', 'secondary_hover', 'secondary_active', 'danger', 'danger_hover', 'danger_active', 'warning', 'warning_hover', 'warning_active', 'success', 'success_hover', 'success_active', 'info', 'info_hover', 'info_active', 'dark', 'dark_hover', 'dark_active', 'light', 'light_hover', 'light_active', 'gray', 'gray_hover', 'gray_active', 'black', 'white', 'transparent']
 
