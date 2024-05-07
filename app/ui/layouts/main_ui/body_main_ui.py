@@ -24,6 +24,7 @@ class BodyMain(CTkFrame):
         self.group_dao = GroupDAO()
         self.account_dao = AccountDAO()
         # --------------- Init UI ---------------
+        AccountUtil.base_ui = self
         self.init_ui()
 
     def init_ui(self):
@@ -64,7 +65,7 @@ class BodyMain(CTkFrame):
         self.search_entry = CTkEntry(self.search_frame)
         self.search_entry.pack(side='left', fill='x', expand=True)
 
-        self.search_button = CTkButton(self.search_frame, text='',image=AssetUtil.get_icon('search'))
+        self.search_button = CTkButton(self.search_frame, text='',image=AssetUtil.get_icon('search'), command=lambda: TableUtil.find_data(self.thesis_dao, self.search_entry.get()))
         self.search_button.pack(side='right', padx=(5, 0))
         #----------------- Table -----------------
         self.scroll_frame_table = CTkScrollableFrame(self.content_home, height=600)
@@ -170,6 +171,9 @@ class BodyMain(CTkFrame):
         elif self.tab_view_content.get() == 'Grade':
             self.tab_grade_ui.init_ui()
             # print('Grade')    
+        elif self.tab_view_content.get() == 'Sumary':
+            self.tab_sumary_ui.init_body_ui()
+            # print('Sumary')
 
 
 
@@ -289,10 +293,11 @@ class BodyMain(CTkFrame):
         self.menu_lecture = CTkOptionMenu(self.form_register_frame, values=list_teacher,)
         self.menu_lecture.pack(fill='x', pady=5, padx=5)
         # Button Register
-        self.btn_reg_frame = CTkFrame(self.form_register_frame)
-        self.btn_reg_frame.pack(fill='x', pady=5, padx=5)
-        self.button_register = CTkButton(self.btn_reg_frame, text='Register', image=AssetUtil.get_icon('send'), height=50, command=lambda : AccountUtil.on_send_btn_register_thesis(self.name_thesis_entry.get(), self.selection_tech_value, self.description_entry.get("0.0", "end"), self.menu_lecture.get()))
-        self.button_register.pack(fill='x', pady=5, padx=5)
+        if self.account.role == 'lecturer':
+            self.btn_reg_frame = CTkFrame(self.form_register_frame)
+            self.btn_reg_frame.pack(fill='x', pady=5, padx=5)
+            self.button_register = CTkButton(self.btn_reg_frame, text='Register', image=AssetUtil.get_icon('send'), height=50, command=lambda : AccountUtil.on_send_btn_register_thesis(self.name_thesis_entry.get(), self.selection_tech_value, self.description_entry.get("0.0", "end"), self.menu_lecture.get()))
+            self.button_register.pack(fill='x', pady=5, padx=5)
 
     def init_ui_show_detail_thesis(self):
         
@@ -380,6 +385,16 @@ class BodyMain(CTkFrame):
 
         # self.register_group = CTkFrame(self.ctn_register_group_frame)
         # self.register_group.pack(fill='x', pady=5)
+        if self.account.role=='lecturer':
+            frame_create_group = CTkFrame(self.scroll_detail_thesis)
+            frame_create_group.pack(fill='x', pady=5, padx=5)
+
+            label_create_group = CTkLabel(frame_create_group, text='Create Group')
+            label_create_group.pack(side='left', padx=10, pady=10)
+
+            button_create_group = CTkButton(frame_create_group, text='Create', command=lambda name=f"Group {self.selected_thesis.name} {self.selected_thesis.group_list.__len__()+1}", thesis=self.selected_thesis, account=self.account: AccountUtil.on_create_group(name, thesis, account))
+            button_create_group.pack(side='right', padx=10, pady=10)
+
 
         self.button_out_group = None
         # List All Group in Register Group

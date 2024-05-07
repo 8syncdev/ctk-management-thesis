@@ -152,6 +152,7 @@ class Thesis(Base):
     score = Column(Float, default=0)
     deadline = Column(DateTime, default=datetime.datetime.now())
 
+    #* Define the many-to-many relationship between Thesis and TechnologyCategory
     technology_category_list = relationship('TechnologyCategory', secondary=thesis_technology_category_association, back_populates='thesis_list')
 
     account = relationship('Account', back_populates='thesis')
@@ -160,6 +161,7 @@ class Thesis(Base):
 
     criteria_list = relationship('Criterion', secondary=thesis_criterion_association, back_populates='thesis_list')
 
+    #* Define the many-to-many relationship between Thesis and TechnologyRequirement
     technology_requirement_list = relationship('TechnologyRequirement', secondary=tech_requriment_thesis_association, back_populates='thesis_list')
 
 
@@ -195,6 +197,13 @@ class Comment (Base):
     account = relationship('Account')
     task_list = relationship('Task', secondary=task_comment_association, back_populates='comment_list')
 
+# Define association table for the many-to-many relationship between Grade and GradeByCouncil
+grade_grade_by_council_association = Table(
+    'grade_grade_by_council_association',
+    Base.metadata,
+    Column('grade_id', Integer, ForeignKey('grade.id')),
+    Column('grade_by_council_id', Integer, ForeignKey('grade_by_council.id'))
+)
 # Define the Grade model
 class Grade(Base):
     __tablename__ = 'grade'
@@ -206,9 +215,13 @@ class Grade(Base):
     account_id = Column(Integer, ForeignKey('account.id'))
     # Define the one-to-many relationship between Grade and Thesis
     thesis_id = Column(Integer, ForeignKey('thesis.id'))
+    name_teacher_grade = Column(String)
 
     account = relationship('Account')
     thesis = relationship('Thesis')
+    grade_by_council_list = relationship('GradeByCouncil', secondary=grade_grade_by_council_association, back_populates='grade_list')
+
+
 
 
 
@@ -220,6 +233,8 @@ class GradeByCouncil(Base):
 
     thesis = relationship('Thesis')
     account_list = relationship('Account', secondary=grade_by_council_account_association, back_populates='grade_by_council_list')
+    grade_list = relationship('Grade', secondary=grade_grade_by_council_association, back_populates='grade_by_council_list')
+
 
 
 

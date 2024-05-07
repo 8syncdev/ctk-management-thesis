@@ -37,6 +37,7 @@ class TabGroupUI(CTkFrame):
         self.selected_group = AccountUtil.get_joined_group(self.loggin_account) if AccountUtil.get_joined_group(self.loggin_account) != None else None
         if self.loggin_account.role == 'lecturer':
             self.selected_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)[0] if AccountUtil.get_all_group_of_thesis(self.loggin_account) != [] else None
+        self.selected_theis = AccountUtil.get_thesis_of_selected_group(self.selected_group) if self.selected_group != None else None
         # ----------------- Header -----------------
         if hasattr(self, 'header_section'):
             self.header_section.destroy()
@@ -93,6 +94,8 @@ class TabGroupUI(CTkFrame):
                     self.menu_option_thesis_of_lecturer.set(thesis.name)
                     self.menu_option_groups_of_lecturer.set(thesis.group_list[0].name)
                     self.label_name_group.configure(text=f'Group: {thesis.group_list[0].name}')
+                    self.label_name_thesis.configure(text=f'Thesis: {thesis.name}')
+                    self.selected_theis = thesis
                     # Re-Implement body
                     self.selected_group = thesis.group_list[0]
             self.implement_body()
@@ -104,7 +107,7 @@ class TabGroupUI(CTkFrame):
     def on_change_group(self, e=None):
         try:
             self.slide_show_group_task.animate_backwards()
-            get_all_group = AccountUtil.get_all_group_of_thesis(self.loggin_account)
+            get_all_group = AccountUtil.get_all_group_of_thesis(self.loggin_account, self.selected_theis)
             # print([group.name for group in get_all_group])
             # print(self.menu_option_groups_of_lecturer.get())
             for group in get_all_group:

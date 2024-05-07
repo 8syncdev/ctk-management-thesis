@@ -1,19 +1,25 @@
 from app.db.main import *
 from customtkinter import *
-
+import random as r
 
 
 class AccountUtil:
 
     base_ui = None
-    # GroupDAO
     group_dao = GroupDAO()
     thesis_dao = ThesisDAO()
+    account_dao = AccountDAO()
+    task_dao = TaskDAO()
+    grade_by_council_dao = GradeByCouncilDAO()
+    grade_dao = GradeDAO()
+    tech_cate_dao = TechnologyCategoryDAO()
+    technology_requirement_list_dao = TechnologyRequirementDAO()
     max_member = 6
+    criteria_list_dao = CriterionDAO()
     #
 
     @staticmethod
-    def on_send_btn_register_thesis(name_thesis: str, tech_cate, description: str, lecturer):
+    def on_send_btn_register_thesis(name_thesis: str, tech_cate, description: str, lecturer: str):
         try:
             print('------------------------------ Register thesis ------------------------------')
             print(f'Name: {name_thesis}')
@@ -21,6 +27,22 @@ class AccountUtil:
             print(f'Description: {description}')
             print(f'Lecturer: {lecturer}')
             print('------------------------------ Register thesis ------------------------------')
+            list_tech_cate = []
+            for tech_name in tech_cate:
+                for tech in AccountUtil.tech_cate_dao.get_all():
+                    if tech_name == tech.name:
+                        list_tech_cate.append(tech)
+
+            for thesis in AccountUtil.thesis_dao.get_all():
+                if thesis.name == name_thesis:
+                    print('Thesis already exists')
+                    AccountUtil.base_ui.slide_show_form.animate()
+                    return
+            thesis = Thesis(name=name_thesis, account=AccountUtil.account_dao.get(int(lecturer.split('-')[0])), technology_category_list=list_tech_cate, technology_requirement_list=r.choices(AccountUtil.technology_requirement_list_dao.get_all(), k=AccountUtil.technology_requirement_list_dao.get_all().__len__() % 4), criteria_list=r.choices(AccountUtil.criteria_list_dao.get_all(), k=AccountUtil.criteria_list_dao.get_all().__len__() % 4))
+            AccountUtil.thesis_dao.create(thesis)
+            print('Register thesis successfully')
+            AccountUtil.base_ui.slide_show_form.animate()
+
         except Exception as e:
             print(f'Error: {e}')
 
@@ -53,17 +75,21 @@ class AccountUtil:
             print(f'Error: {e}')
 
     @staticmethod
-    def get_joined_group(account: Account):
+    def get_joined_group(account: Account) -> Group:
         try:
-            return account.group_list[0]
+            get_group = account.group_list[0]
+            return get_group if get_group != None else None
         except Exception as e:
             print(f'Error: {e}')
             return None
         
     @staticmethod
-    def get_all_group_of_thesis(account: Account):
+    def get_all_group_of_thesis(account: Account, _thesis: Thesis=None):
         try:
             get_all_thesis = AccountUtil.thesis_dao.get_all()
+            for thesis in get_all_thesis:
+                if _thesis != None and account.email == thesis.account.email and _thesis == thesis:
+                    return thesis.group_list
             for thesis in get_all_thesis:
                 if account.email == thesis.account.email:
                     return thesis.group_list
@@ -120,3 +146,40 @@ class AccountUtil:
         except Exception as e:
             print(f'Error: {e}')
             return base_not_found
+        
+    @staticmethod
+    def get_grade_of_account(account: Account):
+        try:
+            list_grade = []
+            get_all_grade = AccountUtil.grade_dao.get_all()
+            for grade in get_all_grade:
+                if account.email == grade.account.email:
+                    list_grade.append(grade)
+            return "No grade" if list_grade.__len__() == 0 else sum([grade.score for grade in list_grade]) / list_grade.__len__()
+                
+        except Exception as e:
+            print(f'Error: {e}')
+            return
+        
+    @staticmethod
+    def on_create_group(name: str, thesis: Thesis, account: Account):
+        try:
+            print('------------------------------ Create group ------------------------------')
+            print(f'Name: {name}')
+            print(f'Thesis: {thesis.name}')
+            print(f'Account: {account.email}')
+            print('------------------------------ Create group ------------------------------')
+            for group in AccountUtil.group_dao.get_all():
+                if group.name == name:
+                    print('Group already exists')
+                    AccountUtil.base_ui.slide_show_detail.animate()
+                    return
+            group = Group(name=name)
+            AccountUtil.group_dao.create(group)
+            thesis.group_list.append(group)
+            thesis.account = account
+            AccountUtil.thesis_dao.update(thesis)
+            print('Create group successfully')
+            AccountUtil.base_ui.slide_show_detail.animate()
+        except Exception as e:
+            print(f'Error: {e}')
