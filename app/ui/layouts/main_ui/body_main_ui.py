@@ -117,11 +117,11 @@ class BodyMain(CTkFrame):
         self.init_ui_form_register_thesis()
 
         # --------------- Action ---------------
-        self.frame_action = CTkFrame(self.content_home)
-        self.frame_action.pack(fill='both', pady=5, expand=True)
-
-        self.button_register_thesis = CTkButton(self.frame_action, text='Register Thesis', image=AssetUtil.get_icon('plus-circle'), command=lambda: self.slide_show_form.animate())
-        self.button_register_thesis.pack(pady=5, padx=5, side='left')
+        if self.account.role=='lecturer':
+            self.frame_action = CTkFrame(self.content_home)
+            self.frame_action.pack(fill='both', pady=5, expand=True)
+            self.button_register_thesis = CTkButton(self.frame_action, text='Register Thesis', image=AssetUtil.get_icon('plus-circle'), command=lambda: self.slide_show_form.animate())
+            self.button_register_thesis.pack(pady=5, padx=5, side='left')
         # print(self.account.role)
         #----------------- End Tab Home -----------------
 

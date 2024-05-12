@@ -5,8 +5,8 @@ from app.db.main import AccountDAO
 
 
 
-def main(selected_account_id: int = 1):
+def main(selected_account_id: int = 2):
     main_ui = MainUI(account=AccountDAO().get(selected_account_id))
-    # auth_ui = AuthUI()
     main_ui.run_ui()
+    # auth_ui = AuthUI()
     # auth_ui.run_ui()
